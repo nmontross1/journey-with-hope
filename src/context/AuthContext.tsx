@@ -19,14 +19,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
-      setUser(data.user || null);
+      // For local admin testing, add is_admin: true to the user object
+      if (data.user) {
+        setUser({ ...data.user, is_admin: true });
+      } else {
+        setUser(null);
+      }
       setIsLoading(false);
     };
 
     getUser();
 
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null);
+      if (session?.user) {
+        // For local admin testing, add is_admin: true to the user object
+        setUser({ ...session.user, is_admin: true });
+      } else {
+        setUser(null);
+      }
     });
 
     return () => {

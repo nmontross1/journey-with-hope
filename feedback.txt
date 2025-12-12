@@ -1,0 +1,38 @@
+Landing Page
+- Make this the 'About Page' 
+- When scrolling down this should show
+    --Login
+    - Create An Account
+    - Shop
+    - Appointments
+    - Events
+    - Locations
+
+When ordering a product or a doing a booking, there should be an option to create an account after the order or booking is made. 
+
+When creating an account the following information should be provided.
+- Name *
+- Email *
+- Phone *
+- Prefer Call, Text, or Both
+- Over 18? *
+- Birth Date 
+- Address (only if ordering a product);
+
+Booking Updates
+- There should be an option for a 1:1 main shop consultation.
+- When Reiki is booked, the main shop store should be closed during those hours. Tarot bookings should not affect these hours. 
+
+Products
+- There should be an option to preselect types and add new types when creating products.
+- There should be an option to update existing products.
+- When a product is ordered, its quantity/product should be removed from the shop.
+    - Get a running list for this.
+- Allow for image upload that is not a static URL. 
+
+Admin Page
+- Upcoming Appointments
+    - Should display person's name and phone number.
+
+- Admin Calendar
+    - A more user friendly way to set availability. 

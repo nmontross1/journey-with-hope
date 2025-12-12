@@ -24,3 +24,32 @@ CREATE POLICY "Users can update their own items" ON tasks
 -- Policy to allow users to delete their own items
 CREATE POLICY "Users can delete their own items" ON tasks
   FOR DELETE USING (auth.uid() = user_id);
+
+-- Products table
+create table products (
+  id bigserial primary key,
+  name text not null,
+  type text,
+  description text,
+  price numeric(10,2) not null,
+  quantity integer not null default 0,
+  image text,
+  created_at timestamp with time zone default now()
+);
+
+-- Tarot availability table
+create table tarot_availability (
+  id bigserial primary key,
+  date date not null,
+  time text not null,
+  mode text not null check (mode in ('online', 'in-person')),
+  created_at timestamp with time zone default now()
+);
+
+-- Reiki availability table
+create table reiki_availability (
+  id bigserial primary key,
+  date date not null,
+  time text not null,
+  created_at timestamp with time zone default now()
+);

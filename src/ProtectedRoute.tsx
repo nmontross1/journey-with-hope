@@ -1,7 +1,11 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, Outlet } from "react-router-dom";
 
-export const ProtectedRoute = () => {
+type ProtectedRouteProps = {
+  adminOnly?: boolean;
+};
+
+export const ProtectedRoute = ({ adminOnly }: ProtectedRouteProps) => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -15,5 +19,13 @@ export const ProtectedRoute = () => {
     );
   }
 
-  return user ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Adjust this check to match your user model (e.g., user.is_admin or user.role === "admin")
+  if (adminOnly && !user.is_admin) {
+    return <Navigate to="/" replace />;
+  }  
+  return <Outlet />;
 };

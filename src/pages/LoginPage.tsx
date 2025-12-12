@@ -58,10 +58,10 @@ export default function LoginPage() {
         <div className="w-full max-w-md bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
           <div className="bg-indigo-600 p-6 text-white">
             <h1 className="text-2xl font-bold text-center">
-              Welcome to TodoMaster
+              Welcome to Journey With Hope
             </h1>
             <p className="text-indigo-100 text-center mt-2">
-              Login to manage your tasks
+              Login to shop, book tarot readings, reiki, and more!
             </p>
           </div>
 
