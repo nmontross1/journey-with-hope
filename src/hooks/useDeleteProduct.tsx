@@ -1,4 +1,4 @@
-import { supabase } from "@/supabaseClient";
+import { supabase } from "@/libs/supabaseClient";
 
 export async function useDeleteProduct(productId: number) {
   const { error } = await supabase

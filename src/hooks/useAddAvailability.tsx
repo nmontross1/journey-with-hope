@@ -1,12 +1,12 @@
-import { supabase } from "@/supabaseClient";
+import { supabase } from "@/libs/supabaseClient";
 
 export async function useAddAvailability(
-  service_type: "reiki" | "tarot" | null,
-  start: Date
+  service_type: "reiki" | "tarot" | "consultation" | null,
+  start: Date,
 ) {
   const available_from = new Date(start);
   const available_to = new Date(start);
-  available_to.setHours(available_from.getHours() + 1);
+  available_to.setHours(available_from.getHours() + 30);
 
   const { data, error } = await supabase
     .from("availability")

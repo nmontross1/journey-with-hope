@@ -1,9 +1,9 @@
-import { supabase } from "@/supabaseClient";
+import { supabase } from "@/libs/supabaseClient";
 
 export async function useAddBooking(
   availabilityIds: string[],
-  serviceType: "tarot" | "reiki" | "combo",
-  userId: string
+  serviceType: "tarot" | "reiki" | "combo" | "consultation",
+  userId: string,
 ) {
   if (availabilityIds.length === 0) throw new Error("No slots to book");
 
@@ -26,7 +26,9 @@ export async function useAddBooking(
     availability_id,
   }));
 
-  const { error: slotsError } = await supabase.from("booking_slots").insert(slotInserts);
+  const { error: slotsError } = await supabase
+    .from("booking_slots")
+    .insert(slotInserts);
 
   if (slotsError) {
     // Rollback booking on failure to keep consistency

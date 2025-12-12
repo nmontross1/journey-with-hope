@@ -1,22 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-
-export type CartItem = {
-  id: number;
-  name: string;
-  type: string;
-  price: number;
-  quantity: number;
-  image: string;
-};
+import type { CartItem } from "@/types/CartItem";
 
 type CartContextType = {
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
-  updateQuantity: (id: number, quantity: number) => void;
-  removeFromCart: (id: number) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  removeFromCart: (id: string) => void;
   clearCart: () => void;
 };
-
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_KEY = "cartData";
@@ -56,7 +47,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return prev.map((item) =>
           item.id === newItem.id
             ? { ...item, quantity: item.quantity + newItem.quantity }
-            : item
+            : item,
         );
       } else {
         return [...prev, newItem];
@@ -64,15 +55,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }
 
-  function updateQuantity(id: number, quantity: number) {
+  function updateQuantity(id: string, quantity: number) {
     setCart((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item
-      )
+        item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item,
+      ),
     );
   }
 
-  function removeFromCart(id: number) {
+  function removeFromCart(id: string) {
     setCart((prev) => prev.filter((item) => item.id !== id));
   }
 

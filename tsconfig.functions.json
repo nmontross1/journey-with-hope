@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["deno.ns", "deno.unstable", "esnext"],
+    "types": [],
+    "strict": true,
+    "moduleResolution": "node",
+    "noEmit": true
+  },
+  "nodeModules": "auto",
+  "include": ["supabase/functions/**/*"]
+}

@@ -1,12 +1,11 @@
-import { createContext, useState, useEffect } from "react";
-import { supabase } from "@/supabaseClient";
+import { createContext, useEffect, useState } from "react";
+import { supabase } from "@/libs/supabaseClient";
 
 type AuthContextType = {
   user: any;
   isLoading: boolean;
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
@@ -18,30 +17,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      // For local admin testing, add is_admin: true to the user object
-      if (data.user) {
-        setUser({ ...data.user, is_admin: true });
-      } else {
-        setUser(null);
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
+      if (authUser) {
+        // Fetch the profile to get the role
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", authUser.id)
+          .single();
+
+        setUser({
+          ...authUser,
+          profile: profile,
+          is_admin: profile?.role === "admin", // Add this for easier checking
+        });
       }
+
       setIsLoading(false);
     };
 
     getUser();
-
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        // For local admin testing, add is_admin: true to the user object
-        setUser({ ...session.user, is_admin: true });
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => {
-      data.subscription.unsubscribe();
-    };
   }, []);
 
   return (

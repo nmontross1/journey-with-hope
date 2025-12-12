@@ -1,85 +1,66 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/supabaseClient";
-
-export interface Slot {
-  id: string;
-  time: string;
-}
-
-function getNowInNY() {
-  // Get current date/time adjusted to New York timezone
-  const now = new Date();
-  const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
-  return new Date(nyString);
-}
+import { supabase } from "@/libs/supabaseClient";
 
 export function useAvailability() {
-  const [availability, setAvailability] = useState<Record<string, Slot[]>>({});
-  const [loading, setLoading] = useState<boolean>(false);
+  const [availability, setAvailability] = useState<Record<string, any[]>>({});
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchAvailability() {
-      setLoading(true);
-
-      const { data: availabilityData, error: availabilityError } = await supabase
+  const fetchAvailability = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
         .from("availability")
-        .select("id, available_from");
+        .select("*")
+        .gt("available_from", new Date().toISOString());
 
-      if (availabilityError) {
-        console.error("Error fetching availability:", availabilityError);
-        setLoading(false);
-        return;
-      }
+      if (error) throw error;
 
-      const { data: bookedSlotsData, error: bookedSlotsError } = await supabase
-        .from("booking_slots")
-        .select("availability_id");
+      const grouped: Record<string, any[]> = {};
 
-      if (bookedSlotsError) {
-        console.error("Error fetching booked slots:", bookedSlotsError);
-        setLoading(false);
-        return;
-      }
+      data?.forEach((slot) => {
+        const d = new Date(slot.available_from);
 
-      const bookedIds = new Set(bookedSlotsData.map((b) => b.availability_id));
-      const nowNY = getNowInNY();
-
-      const availableSlots = availabilityData.filter((slot) => {
-        if (bookedIds.has(slot.id)) return false;
-
-        const slotDate = new Date(slot.available_from);
-        // Convert slot time to NY timezone for accurate comparison
-        const slotNYString = slotDate.toLocaleString("en-US", { timeZone: "America/New_York" });
-        const slotNYDate = new Date(slotNYString);
-
-        // Filter out slots that are in the past or exactly now
-        return slotNYDate > nowNY;
-      });
-
-      const grouped: Record<string, Slot[]> = {};
-      availableSlots.forEach(({ id, available_from }) => {
-        const d = new Date(available_from);
-        const dateStr = d.toISOString().split("T")[0];
-        const timeStr = d.toLocaleTimeString("en-US", {
-          hour: "numeric",
+        const dateKey = d.toISOString().split("T")[0];
+        const time = d.toLocaleTimeString("en-US", {
+          hour: "2-digit",
           minute: "2-digit",
-          hour12: true,
-          timeZone: "America/New_York",
+          hour12: false,
         });
-        if (!grouped[dateStr]) grouped[dateStr] = [];
-        grouped[dateStr].push({ id, time: `${timeStr} EST` });
+
+        if (!grouped[dateKey]) grouped[dateKey] = [];
+
+        grouped[dateKey].push({
+          id: slot.id,
+          available_from: slot.available_from,
+          time,
+          date: d,
+          service_type: slot.service_type ?? null, // <— SAFE OPTIONAL
+        });
       });
 
-      Object.keys(grouped).forEach((dateKey) => {
-        grouped[dateKey].sort((a, b) => (a.time > b.time ? 1 : -1));
+      // sort times
+      Object.values(grouped).forEach((daySlots) => {
+        daySlots.sort((a, b) =>
+          a.time.localeCompare(b.time, "en-US", { numeric: true }),
+        );
       });
 
       setAvailability(grouped);
+    } catch (err) {
+      console.error("Error fetching availability:", err);
+    } finally {
       setLoading(false);
     }
+  };
 
+  useEffect(() => {
     fetchAvailability();
   }, []);
 
-  return { availability, loading, setAvailability };
+  return {
+    availability,
+    loading,
+    setAvailability,
+    refetch: fetchAvailability,
+  };
 }

@@ -1,185 +1,306 @@
-import { useState } from "react";
-import { supabase } from "@/supabaseClient";
+import { useState, useEffect, Fragment } from "react";
+import { supabase } from "@/libs/supabaseClient";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import Layout from "./Layout";
 import { useNavigate } from "react-router-dom";
+import { Listbox, Transition } from "@headlessui/react";
+import type { LoginForm } from "@/types/LoginForm";
+import type { RegisterForm } from "@/types/RegisterForm";
+import Logo from "@/components/Logo";
 
-type LoginForm = {
-  email: string;
-  password: string;
-};
+const brandColor = "#d6c47f";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState } = useForm<LoginForm>();
+  const { register, handleSubmit, setValue, watch } = useForm<
+    LoginForm | RegisterForm
+  >({ mode: "onChange" });
 
-  const onRegisterSubmit = async (data: LoginForm) => {
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  useEffect(() => {
+    register("birthMonth", { required: isRegistering });
+    register("contactMethod", { required: isRegistering });
+  }, [register, isRegistering]);
+
+  const onSubmit = async (data: LoginForm | RegisterForm) => {
     setLoading(true);
+    try {
+      if (isRegistering) {
+        const d = data as RegisterForm;
 
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-    });
+        const { data: signUpData, error: signUpError } =
+          await supabase.auth.signUp({
+            email: d.email,
+            password: d.password,
+          });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      navigate("/dashboard");
-      toast.success("You are logged in successfully!");
+        if (signUpError) throw signUpError;
+        if (!signUpData.user) throw new Error("User not returned.");
+
+        const { error: profileError } = await supabase.from("profiles").insert([
+          {
+            id: signUpData.user.id,
+            name: d.name,
+            birth_month: d.birthMonth,
+            phone: d.phone,
+            over_18: d.over18,
+            contact_method: d.contactMethod,
+          },
+        ]);
+
+        if (profileError) throw profileError;
+
+        toast.success("Registration successful!");
+        navigate("/");
+      } else {
+        const d = data as LoginForm;
+
+        // ✅ Sign in and get session
+        const { data: signInData, error: authError } =
+          await supabase.auth.signInWithPassword({
+            email: d.email,
+            password: d.password,
+          });
+
+        if (authError) throw authError;
+        if (!signInData.session) throw new Error("Session not returned.");
+
+        // ✅ Set session explicitly
+        await supabase.auth.setSession(signInData.session);
+
+        // ✅ Get user after session is set
+        const { data: userData, error: userError } =
+          await supabase.auth.getUser();
+        if (userError) throw userError;
+        if (!userData.user) throw new Error("Unable to load user.");
+
+        // ✅ Get profile role
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userData.user.id)
+          .single();
+
+        toast.success("You are logged in successfully!");
+        if (profile?.role === "admin") navigate("/admin");
+        else navigate("/");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  const onLoginSubmit = async (data: LoginForm) => {
-    setLoading(true);
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
-
-    if (error) {
-      toast.error(error.message);
-    } else {
-      navigate("/dashboard");
-      toast.success("You are logged in successfully!");
-    }
-
-    setLoading(false);
-  };
+  const inputClass =
+    "w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors";
 
   return (
     <Layout>
+      <Logo />
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="w-full max-w-md bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-indigo-600 p-6 text-white">
-            <h1 className="text-2xl font-bold text-center">
-              Welcome to Journey With Hope
+          <div className="p-6" style={{ backgroundColor: brandColor }}>
+            <h1 className="text-2xl font-bold text-center text-white">
+              {isRegistering ? "Register" : "Login"}
             </h1>
-            <p className="text-indigo-100 text-center mt-2">
-              Login to shop, book tarot readings, reiki, and more!
-            </p>
           </div>
 
-          <form className="p-6 space-y-6">
+          <form className="p-6 space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4">
+              {/* Email */}
               <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email
                 </label>
                 <input
-                  id="email"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                   type="email"
-                  placeholder="your@email.com"
+                  className={inputClass}
                   {...register("email", { required: true })}
                 />
               </div>
 
+              {/* Password */}
               <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password
                 </label>
                 <input
-                  id="password"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                   type="password"
-                  placeholder="••••••••"
+                  className={inputClass}
                   {...register("password", { required: true })}
                 />
               </div>
+
+              {/* Registration Fields */}
+              {isRegistering && (
+                <>
+                  {/* Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      className={inputClass}
+                      {...register("name", { required: true })}
+                    />
+                  </div>
+
+                  {/* Birth Month */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Birth Month
+                    </label>
+                    <Listbox
+                      value={watch("birthMonth") || ""}
+                      onChange={(v) =>
+                        setValue("birthMonth", v, { shouldValidate: true })
+                      }
+                    >
+                      <div className="relative">
+                        <Listbox.Button className="relative w-full cursor-pointer rounded-lg border border-gray-300 bg-white py-3 px-4 text-left shadow-sm focus:outline-none focus:ring-2">
+                          <span className="block truncate">
+                            {watch("birthMonth") || "Select month"}
+                          </span>
+                        </Listbox.Button>
+                        <Transition
+                          as={Fragment}
+                          leave="transition ease-in duration-100"
+                          leaveFrom="opacity-100"
+                          leaveTo="opacity-0"
+                        >
+                          <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 shadow-lg border z-10">
+                            {months.map((month) => (
+                              <Listbox.Option
+                                key={month}
+                                value={month}
+                                className={({ active }) =>
+                                  `cursor-pointer select-none py-2 px-4 ${active ? "bg-gray-100" : "text-gray-900"}`
+                                }
+                              >
+                                {month}
+                              </Listbox.Option>
+                            ))}
+                          </Listbox.Options>
+                        </Transition>
+                      </div>
+                    </Listbox>
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      className={inputClass}
+                      {...register("phone", { required: true })}
+                    />
+                  </div>
+
+                  {/* Contact Method */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Preferred Contact Method
+                    </label>
+                    <input type="hidden" {...register("contactMethod")} />
+                    <Listbox
+                      value={watch("contactMethod") || ""}
+                      onChange={(v) =>
+                        setValue("contactMethod", v, { shouldValidate: true })
+                      }
+                    >
+                      <div className="relative">
+                        <Listbox.Button className="relative w-full cursor-pointer rounded-lg border border-gray-300 bg-white py-3 px-4 text-left shadow-sm">
+                          <span className="block truncate">
+                            {watch("contactMethod")
+                              ? { call: "Call", text: "Text", email: "Email" }[
+                                  watch("contactMethod")
+                                ]
+                              : "Select"}
+                          </span>
+                        </Listbox.Button>
+                        <Transition
+                          as={Fragment}
+                          leave="transition ease-in duration-100"
+                          leaveFrom="opacity-100"
+                          leaveTo="opacity-0"
+                        >
+                          <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto bg-white rounded-lg shadow-lg border z-10">
+                            {[
+                              { value: "call", label: "Call" },
+                              { value: "text", label: "Text" },
+                              { value: "email", label: "Email" },
+                            ].map((option) => (
+                              <Listbox.Option
+                                key={option.value}
+                                value={option.value}
+                                className={({ active }) =>
+                                  `cursor-pointer select-none py-2 px-4 ${active ? "bg-gray-100" : ""}`
+                                }
+                              >
+                                {option.label}
+                              </Listbox.Option>
+                            ))}
+                          </Listbox.Options>
+                        </Transition>
+                      </div>
+                    </Listbox>
+                  </div>
+
+                  {/* Over 18 */}
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      {...register("over18", { required: true })}
+                    />
+                    <span>I am over 18</span>
+                  </div>
+                </>
+              )}
             </div>
 
+            {/* Buttons */}
             <div className="flex gap-4 flex-col sm:flex-row">
               <button
-                type="button"
-                onClick={handleSubmit(onLoginSubmit)}
-                disabled={loading || !formState.isValid}
-                className="cursor-pointer flex-1 bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-md font-medium"
+                type="submit"
+                disabled={loading}
+                className="cursor-pointer flex-1 py-3 px-4 rounded-lg font-medium shadow-md transition-colors"
+                style={{ backgroundColor: brandColor, color: "white" }}
               >
-                {loading ? (
-                  <span className="flex items-center justify-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Loading...
-                  </span>
-                ) : (
-                  "Login"
-                )}
+                {loading ? "Loading..." : isRegistering ? "Register" : "Login"}
               </button>
 
               <button
                 type="button"
-                onClick={handleSubmit(onRegisterSubmit)}
-                disabled={loading || !formState.isValid}
-                className="cursor-pointer flex-1 bg-white text-indigo-600 border border-indigo-600 py-3 px-4 rounded-lg hover:bg-indigo-50 disabled:opacity-50 transition-colors shadow-sm font-medium"
+                onClick={() => setIsRegistering(!isRegistering)}
+                className="cursor-pointer flex-1 py-3 px-4 rounded-lg font-medium border shadow-sm transition-colors"
+                style={{ borderColor: brandColor, color: brandColor }}
               >
-                {loading ? "Loading..." : "Register"}
+                {isRegistering ? "Login" : "Register"}
               </button>
             </div>
-
-            <div className="relative flex items-center py-2">
-              <div className="flex-grow border-t border-gray-300"></div>
-              <span className="flex-shrink mx-4 text-gray-500 text-sm">or</span>
-              <div className="flex-grow border-t border-gray-300"></div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                supabase.auth.signInWithOAuth({ provider: "google" })
-              }
-              className="cursor-pointer w-full bg-white border border-gray-300 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center font-medium"
-            >
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-                <path fill="none" d="M1 1h22v22H1z" />
-              </svg>
-              Continue with Google
-            </button>
           </form>
         </div>
       </div>

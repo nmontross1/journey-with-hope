@@ -10,20 +10,30 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.4",
+    "@headlessui/react": "^2.2.9",
+    "@stripe/stripe-js": "^8.5.3",
+    "@supabase/auth-helpers-react": "^0.15.0",
+    "@supabase/supabase-js": "^2.87.1",
     "@tailwindcss/vite": "^4.1.7",
     "@tanstack/react-query": "^5.76.1",
     "date-fns": "^4.1.0",
+    "deno": "^2.6.0",
+    "i18n-iso-countries": "^7.14.0",
+    "next": "^16.0.8",
+    "primeicons": "^7.0.0",
+    "primereact": "^10.9.7",
     "react": "^19.1.0",
     "react-calendar": "^6.0.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.56.4",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.6.0",
-    "react-toastify": "^11.0.5"
+    "react-toastify": "^11.0.5",
+    "stripe": "^20.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@supabase/functions-js": "^2.87.1",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react-swc": "^3.9.0",

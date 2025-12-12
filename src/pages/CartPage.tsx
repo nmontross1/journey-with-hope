@@ -1,85 +1,145 @@
+import { useEffect, useState } from "react";
 import Layout from "./Layout";
 import { useCart } from "@/context/CartContext";
-import { useEffect } from "react";
+import { supabase } from "@/libs/supabaseClient";
+import Logo from "@/components/Logo";
+
+const brandColor = "#d6c47f";
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
+  const [user, setUser] = useState<any>(null);
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const handleCheckout = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert("Order placed! (Demo)");
-    clearCart();
+  // --- Fetch current user ---
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+      console.log("[CartPage] Current user:", user);
+    };
+    fetchUser();
+  }, []);
+
+  // --- Checkout handler ---
+  const handleCheckout = async () => {
+    if (!user || !cart || cart.length === 0) return;
+
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ user_id: user.id, cart }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("[CartPage] Checkout error:", errorData);
+      return;
+    }
+
+    const data = await response.json();
+    if (data.url) window.location.href = data.url;
   };
 
-  useEffect(() => {
-    console.log("CartPage loaded cart:", cart);
-  }, [cart]);
+  const inputClass =
+    "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-50";
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto py-12 px-4">
-        <h1 className="text-3xl font-bold mb-8 text-indigo-700 text-center">Your Order</h1>
-        {cart.length === 0 ? (
-          <div className="text-center text-gray-500 py-16">Your cart is empty.</div>
-        ) : (
-          <form onSubmit={handleCheckout} className="space-y-8">
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <ul className="divide-y">
-                {cart.map((item) => (
-                  <li key={item.id} className="flex items-center gap-4 py-4">
-                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
-                    <div className="flex-1">
-                      <div className="font-semibold text-indigo-700">{item.name}</div>
-                      <div className="text-gray-500 text-sm">{item.type}</div>
-                      <div className="text-gray-600 text-sm">${item.price.toFixed(2)} each</div>
-                    </div>
-                    <input
-                      type="number"
-                      min={1}
-                      value={item.quantity}
-                      onChange={(e) =>
-                        updateQuantity(item.id, Number(e.target.value))
-                      }
-                      className="w-16 border rounded px-2 py-1 mr-2"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-red-500 hover:underline text-sm"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <div className="flex justify-between items-center mt-6">
-                <span className="font-bold text-lg">Total:</span>
-                <span className="text-xl font-bold text-indigo-700">${total.toFixed(2)}</span>
-              </div>
-            </div>
+      <Logo />
+      <div className="flex justify-center items-start py-12 px-4">
+        <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
+          <div className="p-6" style={{ backgroundColor: brandColor }}>
+            <h1 className="text-2xl font-bold text-center text-white">
+              Your Cart
+            </h1>
+          </div>
 
-            {/* Checkout form */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-lg font-semibold mb-4 text-indigo-700">Checkout</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <input className="border rounded px-3 py-2" placeholder="Full Name" required />
-                <input className="border rounded px-3 py-2" placeholder="Email" type="email" required />
-                <input className="border rounded px-3 py-2" placeholder="Shipping Address" required />
-                <input className="border rounded px-3 py-2" placeholder="City" required />
-                <input className="border rounded px-3 py-2" placeholder="State" required />
-                <input className="border rounded px-3 py-2" placeholder="Zip Code" required />
+          <div className="p-6 space-y-6">
+            {cart.length === 0 ? (
+              <div className="text-center py-16 text-gray-700">
+                Your cart is empty.
               </div>
-              <button
-                type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition"
-              >
-                Place Order
-              </button>
-            </div>
-          </form>
-        )}
+            ) : (
+              <>
+                <ul className="space-y-4">
+                  {cart.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center gap-4 p-4 border rounded-lg shadow-sm bg-white"
+                      style={{ minHeight: "80px" }}
+                    >
+                      <img
+                        src={item.image || "/placeholder.png"}
+                        alt={item.name}
+                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                      />
+                      <div className="flex-1 flex flex-col gap-1">
+                        <span className="font-semibold text-gray-800">
+                          {item.name}
+                        </span>
+                        <span className="text-gray-500 text-sm">
+                          {item.type}
+                        </span>
+                        <span className="text-gray-700 text-sm">
+                          ${item.price.toFixed(2)} each
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center gap-2">
+                        <input
+                          type="number"
+                          min={1}
+                          value={item.quantity}
+                          onChange={(e) =>
+                            updateQuantity(item.id, Number(e.target.value))
+                          }
+                          className={inputClass + " w-20"}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-red-500 hover:underline text-sm mt-1"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="flex justify-between items-center mt-6 text-lg font-semibold text-gray-800">
+                  <span>Total:</span>
+                  <span>${total.toFixed(2)}</span>
+                </div>
+
+                <button
+                  onClick={handleCheckout}
+                  className="w-full py-3 mt-6 rounded-lg font-medium shadow-md transition-colors"
+                  style={{ backgroundColor: brandColor, color: "white" }}
+                >
+                  Checkout with Stripe
+                </button>
+
+                <button
+                  type="button"
+                  onClick={clearCart}
+                  className="w-full py-3 mt-2 rounded-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Clear Cart
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </Layout>
   );

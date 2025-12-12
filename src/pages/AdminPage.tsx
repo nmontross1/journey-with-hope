@@ -5,25 +5,33 @@ import { useAddAvailability } from "@/hooks/useAddAvailability";
 import { useDeleteAvailability } from "@/hooks/useDeleteAvailability";
 import { useDeleteProduct } from "@/hooks/useDeleteProduct";
 import { useDeleteBooking } from "@/hooks/useDeleteBooking";
-import { supabase } from "@/supabaseClient";
-import { FiPlus, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { useAddEvent } from "@/hooks/useAddEvent";
+import { useDeleteEvent } from "@/hooks/useDeleteEvent";
+import { supabase } from "@/libs/supabaseClient";
+import { FiPlus } from "react-icons/fi";
+import { getNowInNY } from "@/utils/utils.ts";
+import Logo from "@/components/Logo";
+import type { Product } from "@/types/Product.ts";
+import type { Event } from "@/types/Event.ts";
 
-function getNowInNY(): Date {
-  const now = new Date();
-  const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
-  return new Date(nyString);
-}
+const nowNY = getNowInNY();
+const brandColor = "#d6c47f";
 
 export default function AdminPage() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [availability, setAvailability] = useState<any[]>([]);
   const [bookingSlots, setBookingSlots] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
 
   const [availStartDateTime, setAvailStartDateTime] = useState("");
   const [availEndDateTime, setAvailEndDateTime] = useState("");
 
   const [expandProductForm, setExpandProductForm] = useState(false);
+  const [expandEventForm, setExpandEventForm] = useState(false);
+
   const [newProduct, setNewProduct] = useState({
     name: "",
     type: "",
@@ -33,14 +41,21 @@ export default function AdminPage() {
     image: "",
   });
 
+  const [newEvent, setNewEvent] = useState({
+    title: "",
+    description: "",
+    date: "",
+  });
+
   const [searchTerm, setSearchTerm] = useState("");
   const filteredProducts = products.filter(
     ({ name, type }) =>
       name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      type.toLowerCase().includes(searchTerm.toLowerCase())
+      type.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const addProductMutation = useAddProduct();
+  const addEventMutation = useAddEvent();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,20 +64,32 @@ export default function AdminPage() {
         { data: availData },
         { data: bookingsData },
         { data: bookingSlotsData },
+        { data: profilesData },
+        { data: ordersData },
+        { data: eventsData },
       ] = await Promise.all([
         supabase.from("products").select("*"),
         supabase.from("availability").select("*"),
         supabase
           .from("bookings")
-          .select("id,service_type,user_id,booked_at")
+          .select("*")
           .order("booked_at", { ascending: false }),
         supabase.from("booking_slots").select("booking_id,availability_id"),
+        supabase.from("profiles").select("*"),
+        supabase
+          .from("orders")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase.from("events").select("*").order("date", { ascending: true }),
       ]);
 
       setProducts(productsData || []);
       setAvailability(availData || []);
       setBookings(bookingsData || []);
       setBookingSlots(bookingSlotsData || []);
+      setProfiles(profilesData || []);
+      setOrders(ordersData || []);
+      setEvents(eventsData || []);
     };
 
     fetchData();
@@ -70,31 +97,37 @@ export default function AdminPage() {
 
   const enrichedBookings = bookings
     .map((booking) => {
-      const slots = bookingSlots.filter(bs => bs.booking_id === booking.id);
-      const firstSlot = availability.find(a => a.id === slots?.[0]?.availability_id);
+      const slots = bookingSlots.filter((bs) => bs.booking_id === booking.id);
+      if (!slots.length) return null;
+
+      const firstSlot = availability.find(
+        (a) => a.id === slots[0].availability_id,
+      );
       if (!firstSlot) return null;
+
       const slotDate = new Date(firstSlot.available_from);
+      const profile = profiles.find((p) => p.id === booking.user_id);
+
       return {
         ...booking,
-        slotIds: slots.map(s => s.availability_id),
-        time: slotDate.toLocaleString(),
+        slotIds: slots.map((s) => s.availability_id),
+        time: slotDate.toLocaleString("en-US", {
+          timeZone: "America/New_York",
+        }),
         date: slotDate,
+        profile: profile || {},
       };
     })
-    .filter((b): b is Exclude<typeof b, null> => b !== null)
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
+    .filter(Boolean)
+    .filter((b) => (b as any).date > nowNY)
+    .sort((a, b) => (a as any).date - (b as any).date) as any[];
 
   const cancelBooking = async (booking: any) => {
     if (!confirm("Cancel this booking?")) return;
     try {
       await useDeleteBooking(booking.id);
-      setBookings(bs => bs.filter(b => b.id !== booking.id));
-      setBookingSlots(bs => bs.filter(s => s.booking_id !== booking.id));
-      const restored = booking.slotIds.map((id: string) => {
-        const slot = bookingSlots.find(bs => bs.availability_id === id);
-        return availability.find(a => a.id === id) || slot;
-      }).filter(Boolean);
-      setAvailability(av => [...av, ...restored]);
+      setBookings((bs) => bs.filter((b) => b.id !== booking.id));
+      setBookingSlots((bs) => bs.filter((s) => s.booking_id !== booking.id));
     } catch (err: any) {
       alert(err.message || "Failed to cancel booking.");
     }
@@ -117,9 +150,8 @@ export default function AdminPage() {
       alert("Please specify both start and end date/time");
       return;
     }
-    const nowNY = getNowInNY();
-    const startDT = new Date(availStartDateTime);
 
+    const startDT = new Date(availStartDateTime);
     if (startDT <= nowNY) {
       alert("Start time must be in the future (EST timezone)");
       return;
@@ -129,12 +161,15 @@ export default function AdminPage() {
       alert("End must be after start");
       return;
     }
+
     try {
       const slices = createChunks(availStartDateTime, availEndDateTime);
-      const results = await Promise.all(slices.map(dt => useAddAvailability(null, dt)));
+      const results = await Promise.all(
+        slices.map((dt) => useAddAvailability(null, dt)),
+      );
       const added = results.flat();
       if (added.length) {
-        setAvailability(prev => [...prev, ...added]);
+        setAvailability((prev) => [...prev, ...added]);
         setAvailStartDateTime("");
         setAvailEndDateTime("");
       }
@@ -146,20 +181,34 @@ export default function AdminPage() {
   const handleDeleteSlot = async (id: string) => {
     if (!confirm("Remove this slot?")) return;
     await useDeleteAvailability(id);
-    setAvailability(prev => prev.filter(s => s.id !== id));
+    setAvailability((prev) => prev.filter((s) => s.id !== id));
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    const product = {
-      ...newProduct,
+    const product: Partial<Product> = {
+      name: newProduct.name,
+      type: newProduct.type,
+      description: newProduct.description,
+      image: newProduct.image,
       price: +newProduct.price,
       quantity: +newProduct.quantity,
     };
+
     try {
-      await addProductMutation.mutateAsync(product);
-      setProducts(prev => [...prev, product]);
-      setNewProduct({ name: "", type: "", description: "", price: "", quantity: "", image: "" });
+      await addProductMutation.mutateAsync(product as Product);
+      const { data: productsData } = await supabase
+        .from("products")
+        .select("*");
+      setProducts(productsData || []);
+      setNewProduct({
+        name: "",
+        type: "",
+        description: "",
+        price: "",
+        quantity: "",
+        image: "",
+      });
     } catch (err: any) {
       alert("Add product failed: " + err.message);
     }
@@ -168,62 +217,266 @@ export default function AdminPage() {
   const handleDeleteProduct = async (id: number) => {
     if (!confirm("Delete this product?")) return;
     await useDeleteProduct(id);
-    setProducts(prev => prev.filter(p => p.id !== id));
+    setProducts((prev) => prev.filter((p) => Number(p.id) !== Number(id)));
   };
 
-  const nowNY = getNowInNY();
+  const handleAddEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEvent.title || !newEvent.date) {
+      alert("Event title and date are required");
+      return;
+    }
+
+    try {
+      const eventToAdd: Event = {
+        ...newEvent,
+        id: crypto.randomUUID(),
+      };
+
+      await addEventMutation.mutateAsync(eventToAdd);
+
+      const { data: eventsData } = await supabase
+        .from("events")
+        .select("*")
+        .order("date", { ascending: true });
+
+      setEvents(eventsData || []);
+      setNewEvent({ title: "", description: "", date: "" });
+    } catch (err: any) {
+      alert("Add event failed: " + (err.message || err));
+    }
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    if (!confirm("Delete this event?")) return;
+
+    try {
+      await useDeleteEvent(id); // pass string directly
+      setEvents((prev) => prev.filter((e) => e.id !== id));
+    } catch (err: any) {
+      alert(err.message || "Failed to delete event.");
+    }
+  };
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto py-16 px-6 space-y-16">
-        <section className="bg-white p-6 rounded-xl shadow space-y-4">
-          <h2 className="text-2xl font-semibold text-indigo-700">Upcoming Appointments</h2>
-          <ul className="space-y-3 max-h-64 overflow-y-auto">
-            {enrichedBookings.map(b => (
-              <li key={b.id} className="flex justify-between items-center border-b py-2">
-                <div>
-                  <span className="text-gray-700 font-medium">{b.time}</span>
-                  <span className="ml-4 text-indigo-600 font-semibold capitalize">{b.service_type}</span>
+      <Logo />
+
+      <div className="w-full max-w-full overflow-x-hidden mx-auto py-16 px-4 md:px-6 space-y-10">
+        {/* -------------------- UPCOMING APPOINTMENTS -------------------- */}
+        <section className="bg-white p-6 rounded-xl shadow space-y-4 w-full max-w-full">
+          <h2 className="text-xl font-semibold" style={{ color: brandColor }}>
+            Upcoming Appointments
+          </h2>
+
+          <ul className="space-y-4 max-h-96 overflow-y-auto">
+            {enrichedBookings.map((b) => (
+              <li
+                key={b.id}
+                className="border-l-4 rounded p-4 shadow-sm w-full"
+                style={{
+                  borderColor: brandColor,
+                  backgroundColor: `${brandColor}20`,
+                }}
+              >
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div
+                      className="font-semibold"
+                      style={{ color: brandColor }}
+                    >
+                      {b.profile?.name || "N/A"}
+                    </div>
+
+                    <div className="text-sm text-gray-600 mt-1">
+                      <span className="font-medium">Time: </span> {b.time}
+                    </div>
+
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Service: </span>
+                      <span className="capitalize">{b.service_type}</span>
+                    </div>
+
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Birth Month: </span>
+                      {b.profile?.birth_month || "N/A"}
+                    </div>
+
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Contact Method: </span>
+                      {b.profile?.contact_method || "N/A"}
+                    </div>
+
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Phone: </span>
+                      {b.profile?.phone || "N/A"}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => cancelBooking(b)}
+                    className="text-red-600 hover:text-red-700 font-semibold text-sm whitespace-nowrap"
+                  >
+                    Cancel
+                  </button>
                 </div>
-                <button
-                  onClick={() => cancelBooking(b)}
-                  className="text-red-600 hover:underline font-semibold"
-                >
-                  Cancel
-                </button>
               </li>
             ))}
+
+            {enrichedBookings.length === 0 && (
+              <div className="text-center text-gray-500 py-8">
+                No upcoming appointments
+              </div>
+            )}
           </ul>
         </section>
 
-        <section className="bg-white p-6 rounded-xl shadow space-y-4">
-          <h2 className="text-2xl font-semibold text-indigo-700">Manage Availability</h2>
-          <form onSubmit={handleAddAvailabilityRange} className="flex flex-col md:flex-row md:space-x-4 gap-3">
+        {/* -------------------- RECENT ORDERS -------------------- */}
+        <section className="bg-white p-6 rounded-xl shadow space-y-4 w-full max-w-full">
+          <h2 className="text-xl font-semibold" style={{ color: brandColor }}>
+            Recent Orders
+          </h2>
+
+          <ul className="space-y-4 max-h-96 overflow-y-auto">
+            {orders.map((order) => (
+              <li
+                key={order.id}
+                className="border-l-4 rounded p-4 shadow-sm"
+                style={{
+                  borderColor: brandColor,
+                  backgroundColor: `${brandColor}20`,
+                }}
+              >
+                <div
+                  className="font-semibold text-lg"
+                  style={{ color: brandColor }}
+                >
+                  Order #{order.id}
+                </div>
+
+                <div className="text-sm mt-1">
+                  <span className="font-medium">Date: </span>
+                  {new Date(order.created_at).toLocaleString("en-US", {
+                    timeZone: "America/New_York",
+                  })}
+                </div>
+
+                <div className="text-sm mt-1">
+                  <span className="font-medium">Amount: </span>${order.amount}
+                </div>
+
+                <div className="text-sm">
+                  <span className="font-medium">Status: </span>
+                  {order.status}
+                </div>
+
+                <div className="text-sm break-words">
+                  <span className="font-medium">Stripe Order ID: </span>
+                  {order.stripe_session_id}
+                </div>
+
+                <div className="mt-3">
+                  <span className="font-medium text-sm">Items:</span>
+                  <ul className="ml-4 list-disc text-sm text-gray-700">
+                    {Array.isArray(order.items) &&
+                      (
+                        order.items as {
+                          name: string;
+                          quantity: number;
+                          unit_amount: number;
+                        }[]
+                      ).map((it, idx) => (
+                        <li key={idx}>
+                          {it.name} — {it.quantity} × $
+                          {(it.unit_amount / 100).toFixed(2)}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+
+                {order.shipping_address && (
+                  <div className="text-sm mt-3">
+                    <span className="font-medium">Shipping Address:</span>
+                    <div className="ml-2">
+                      <div> {order.customer_name}</div>
+                      <div>{order.shipping_address.line1}</div>
+                      {order.shipping_address.line2 && (
+                        <div>{order.shipping_address.line2}</div>
+                      )}
+                      <div>
+                        {order.shipping_address.city},{" "}
+                        {order.shipping_address.state}{" "}
+                        {order.shipping_address.postal_code}
+                      </div>
+                      <div>{order.shipping_address.country}</div>
+                    </div>
+                  </div>
+                )}
+              </li>
+            ))}
+
+            {orders.length === 0 && (
+              <div className="text-center text-gray-500 py-8">
+                No recent orders found
+              </div>
+            )}
+          </ul>
+        </section>
+
+        {/* -------------------- MANAGE AVAILABILITY -------------------- */}
+        <section className="bg-white p-6 rounded-xl shadow space-y-4 w-full max-w-full">
+          <h2 className="text-2xl font-semibold" style={{ color: brandColor }}>
+            Manage Availability
+          </h2>
+
+          <form
+            onSubmit={handleAddAvailabilityRange}
+            className="flex flex-col md:flex-row md:space-x-4 gap-3"
+          >
             <input
               type="datetime-local"
               className="border p-2 rounded w-full"
               value={availStartDateTime}
-              onChange={e => setAvailStartDateTime(e.target.value)}
+              onChange={(e) => setAvailStartDateTime(e.target.value)}
               required
             />
+
             <input
               type="datetime-local"
               className="border p-2 rounded w-full"
               value={availEndDateTime}
-              onChange={e => setAvailEndDateTime(e.target.value)}
+              onChange={(e) => setAvailEndDateTime(e.target.value)}
               required
             />
-            <button type="submit" className="bg-indigo-600 text-white py-2 px-4 rounded">
+
+            <button
+              type="submit"
+              className="py-2 px-4 rounded font-medium"
+              style={{ backgroundColor: brandColor, color: "white" }}
+            >
               Set Availability
             </button>
           </form>
+
           <ul className="divide-y text-sm text-gray-800 max-h-64 overflow-y-auto">
             {availability
-              .filter(slot => new Date(slot.available_from) > nowNY)
-              .sort((a, b) => new Date(a.available_from).getTime() - new Date(b.available_from).getTime())
-              .map(slot => (
-                <li key={slot.id} className="flex justify-between items-center py-2">
-                  <span>{new Date(slot.available_from).toLocaleString("en-US", { timeZone: "America/New_York" })}</span>
+              .filter((slot) => new Date(slot.available_from) > nowNY)
+              .sort(
+                (a, b) =>
+                  new Date(a.available_from).getTime() -
+                  new Date(b.available_from).getTime(),
+              )
+              .map((slot) => (
+                <li
+                  key={slot.id}
+                  className="flex justify-between items-center py-2"
+                >
+                  <span>
+                    {new Date(slot.available_from).toLocaleString("en-US", {
+                      timeZone: "America/New_York",
+                    })}
+                  </span>
+
                   <button
                     onClick={() => handleDeleteSlot(slot.id)}
                     className="text-red-500 hover:underline"
@@ -235,50 +488,193 @@ export default function AdminPage() {
           </ul>
         </section>
 
-        <section className="bg-white p-6 rounded-xl shadow space-y-6">
-          <div className="flex items-center justify-between gap-4">
-            <button onClick={() => setExpandProductForm(p => !p)} className="text-indigo-600 flex gap-1">
-              <FiPlus />{expandProductForm ? <FiChevronUp /> : <FiChevronDown />}
-            </button>
-            <h2 className="text-2xl font-semibold text-indigo-700 flex-grow">Manage Products</h2>
-            <input
-              type="text"
-              placeholder="Search..."
-              className="border p-2 rounded max-w-xs"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
+        {/* -------------------- MANAGE PRODUCTS -------------------- */}
+        <section className="bg-white p-6 rounded-xl shadow space-y-6 w-full max-w-full">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setExpandProductForm((p) => !p)}
+                className="flex items-center gap-2 px-3 py-1 rounded-md font-medium shadow-sm transition-colors"
+                style={{
+                  backgroundColor: brandColor,
+                  color: "white",
+                }}
+              >
+                <FiPlus />
+              </button>
+
+              <h2
+                className="text-2xl font-semibold"
+                style={{ color: brandColor }}
+              >
+                Manage Products
+              </h2>
+            </div>
+
+            {!expandProductForm && (
+              <input
+                type="text"
+                placeholder="Search products..."
+                className="border p-2 rounded w-full md:w-64"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            )}
           </div>
 
           {expandProductForm && (
-            <form onSubmit={handleAddProduct} className="grid md:grid-cols-2 gap-5">
-              {["name", "type", "price", "quantity", "image", "description"].map(field => (
+            <form
+              onSubmit={handleAddProduct}
+              className="grid md:grid-cols-2 gap-5"
+            >
+              {[
+                "name",
+                "type",
+                "price",
+                "quantity",
+                "image",
+                "description",
+              ].map((field) => (
                 <input
                   key={field}
-                  type={["price", "quantity"].includes(field) ? "number" : "text"}
+                  type={
+                    ["price", "quantity"].includes(field) ? "number" : "text"
+                  }
                   placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                  className={`border rounded p-3 text-sm ${["image", "description"].includes(field) ? "md:col-span-2" : ""}`}
+                  className={`border rounded p-3 text-sm ${
+                    ["image", "description"].includes(field)
+                      ? "md:col-span-2"
+                      : ""
+                  }`}
                   value={(newProduct as any)[field]}
-                  onChange={e => setNewProduct(prev => ({ ...prev, [field]: e.target.value }))}
+                  onChange={(e) =>
+                    setNewProduct((prev) => ({
+                      ...prev,
+                      [field]: e.target.value,
+                    }))
+                  }
                   required
                 />
               ))}
-              <button type="submit" disabled={addProductMutation.isLoading} className="bg-indigo-600 text-white py-3 rounded col-span-full">
-                {addProductMutation.isLoading ? "Adding..." : "Add Product"}
+
+              <button
+                type="submit"
+                disabled={addProductMutation.isPending}
+                className="py-3 rounded col-span-full font-medium"
+                style={{ backgroundColor: brandColor, color: "white" }}
+              >
+                {addProductMutation.isPending ? "Adding..." : "Add Product"}
               </button>
             </form>
           )}
 
           <ul className="space-y-3 max-h-96 overflow-y-auto">
-            {filteredProducts.map(p => (
-              <li key={p.id} className="flex gap-4 items-center bg-indigo-50 rounded p-3 shadow-sm">
-                <img src={p.image} alt={p.name} className="w-14 h-14 rounded-md object-cover" />
-                <div className="flex-1">
-                  <p className="font-semibold text-indigo-900">{p.name}</p>
-                  <p className="text-sm text-indigo-700">${p.price.toFixed(2)} · {p.type} · Qty: {p.quantity}</p>
+            {filteredProducts.map((p) => (
+              <li
+                key={p.id}
+                className="flex gap-4 items-center rounded p-3 shadow-sm"
+                style={{ backgroundColor: `${brandColor}20` }}
+              >
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  className="w-14 h-14 rounded-md object-cover"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold" style={{ color: brandColor }}>
+                    {p.name}
+                  </p>
+                  <p className="text-sm" style={{ color: `${brandColor}cc` }}>
+                    ${p.price.toFixed(2)} · {p.type} · Qty: {p.quantity}
+                  </p>
                 </div>
-                <button onClick={() => handleDeleteProduct(p.id)} className="text-red-600 hover:underline font-semibold">
-                  Remove
+                <button
+                  onClick={() => handleDeleteProduct(Number(p.id))}
+                  className="text-red-600 hover:text-red-700 font-semibold text-sm"
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* -------------------- MANAGE EVENTS -------------------- */}
+        <section className="bg-white p-6 rounded-xl shadow space-y-6 w-full max-w-full">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setExpandEventForm((p) => !p)}
+                className="flex items-center gap-2 px-3 py-1 rounded-md font-medium shadow-sm transition-colors"
+                style={{ backgroundColor: brandColor, color: "white" }}
+              >
+                <FiPlus />
+              </button>
+              <h2
+                className="text-2xl font-semibold"
+                style={{ color: brandColor }}
+              >
+                Manage Events
+              </h2>
+            </div>
+          </div>
+
+          {expandEventForm && (
+            <form
+              onSubmit={handleAddEvent}
+              className="grid md:grid-cols-2 gap-5"
+            >
+              {["title", "date", "description"].map((field) => (
+                <input
+                  key={field}
+                  type={field === "date" ? "datetime-local" : "text"}
+                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                  className={`border rounded p-3 text-sm ${field === "description" ? "md:col-span-2" : ""}`}
+                  value={(newEvent as any)[field]}
+                  onChange={(e) =>
+                    setNewEvent((prev) => ({
+                      ...prev,
+                      [field]: e.target.value,
+                    }))
+                  }
+                  required={field !== "description"}
+                />
+              ))}
+              <button
+                type="submit"
+                className="py-3 rounded col-span-full font-medium"
+                style={{ backgroundColor: brandColor, color: "white" }}
+              >
+                Add Event
+              </button>
+            </form>
+          )}
+
+          <ul className="space-y-3 max-h-96 overflow-y-auto">
+            {events.map((e) => (
+              <li
+                key={e.id}
+                className="flex gap-4 items-center rounded p-3 shadow-sm"
+                style={{ backgroundColor: `${brandColor}20` }}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold" style={{ color: brandColor }}>
+                    {e.title}
+                  </p>
+                  <p className="text-sm" style={{ color: `${brandColor}cc` }}>
+                    {new Date(e.date).toLocaleString("en-US", {
+                      timeZone: "America/New_York",
+                    })}
+                  </p>
+                  {e.description && (
+                    <p className="text-sm text-gray-700">{e.description}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleDeleteEvent(e.id)}
+                  className="text-red-600 hover:underline font-semibold text-sm"
+                >
+                  Delete
                 </button>
               </li>
             ))}

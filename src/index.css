@@ -1,1 +1,49 @@
 @import "tailwindcss";
+
+/* Shrink weekday labels */
+.react-calendar__month-view__weekdays {
+  font-size: 0.6rem;
+}
+
+.react-calendar__month-view__weekdays__weekday abbr {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Disable year/month click in header */
+.react-calendar__navigation button.react-calendar__navigation__label {
+  pointer-events: none;
+}
+
+/* Root background */
+#root {
+  background-color: #384e1d;
+}
+
+/* ====================== */
+/* Responsive React Calendar */
+/* ====================== */
+.react-calendar {
+  width: 100% !important; /* Fill parent width */
+  max-width: 100%;
+  box-sizing: border-box; /* Ensure padding doesn't overflow */
+}
+
+/* Make tiles smaller on mobile */
+.react-calendar__tile {
+  font-size: 0.7rem;
+}
+
+/* Optional: scale back slightly on very small screens */
+@media (min-width: 768px) {
+  .react-calendar__tile {
+    font-size: 0.875rem;
+  }
+}
+
+/* Wrap calendar for horizontal scroll on tiny screens */
+.calendar-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
