@@ -1,40 +1,20 @@
-# Vite Typescript/React Supabase
+# Journey With Hope
 
-## Install Supabase
+Journey With Hope is a React + Supabase app for managing community events, products, and appointments. It provides both **user-facing pages** for browsing events/products and **admin pages** for managing bookings, availability, and orders.
 
-You need Docker to install supabase locally.
+---
 
-```bash
-npm install supabase --save-dev
-npx supabase init
-npx supabase start
-```
+## Features
 
-## Create table
+- **Users:** Browse events, view products, book appointments.  
+- **Admin:** Add/delete events and products, manage availability, view/cancel bookings, track orders.
 
-Run sample-db.sql query in supabase studio > SQL editor.
+---
 
-Don't forget to enable Realtime in Table Editor > Tasks > Realtime on.
+## Tech Stack
 
-## Install project
+- **Frontend:** React, TypeScript, TailwindCSS, React Router  
+- **Backend:** Supabase (PostgreSQL, Auth)  
+- **State & API:** React Query  
+- **Forms:** React Hook Form  
 
-```
-bun install
-```
-
-## Set env vars in .env
-
-You'll need the anon key and supabase API url.
-
-```
-bun run dev
-```
-
-## List of installed packages
-
-- react-router-dom
-- react-icons
-- react-hook-form
-- @tanstack/react-query
-- react-toastify
-- tailwind
