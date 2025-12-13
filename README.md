@@ -6,15 +6,14 @@ Journey With Hope is a React + Supabase app for managing community events, produ
 
 ## Features
 
-- **Users:** Browse events, view products, book appointments.  
+- **Users:** Browse events, view products, book appointments.
 - **Admin:** Add/delete events and products, manage availability, view/cancel bookings, track orders.
 
 ---
 
 ## Tech Stack
 
-- **Frontend:** React, TypeScript, TailwindCSS, React Router  
-- **Backend:** Supabase (PostgreSQL, Auth)  
-- **State & API:** React Query  
-- **Forms:** React Hook Form  
-
+- **Frontend:** React, TypeScript, TailwindCSS, React Router
+- **Backend:** Supabase (PostgreSQL, Auth)
+- **State & API:** React Query
+- **Forms:** React Hook Form

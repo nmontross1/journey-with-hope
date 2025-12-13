@@ -6,9 +6,7 @@ export default function HomePage() {
     <Layout>
       <div className="flex flex-col relative min-h-screen">
         {/* Main Content */}
-        <div
-          className={`flex-1 flex flex-col items-center justify-start text-center px-4 w-full transition-all duration-300 md:pl-64`}
-        >
+        <div className="flex-1 flex flex-col items-center justify-start text-center px-4 w-full transition-all duration-300">
           <Logo />
           <img
             id="profile-picture"
