@@ -13,6 +13,7 @@ import BookingPage from "@/pages/BookingPage";
 import LocationPage from "@/pages/LocationPage";
 import ProfilePage from "@/pages/ProfilePage";
 import EventsPage from "@/pages/EventsPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/locations" element={<LocationPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/events" element={<EventsPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             {/* ProtectedRoute can check for admin privileges */}
             <Route path="/admin" element={<ProtectedRoute adminOnly={true} />}>
