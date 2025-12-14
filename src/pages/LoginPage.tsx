@@ -1,6 +1,7 @@
 import { useState, useEffect, Fragment } from "react";
 import { supabase } from "@/libs/supabaseClient";
 import { useForm } from "react-hook-form";
+import type { FieldErrors } from "react-hook-form";
 import { toast } from "react-toastify";
 import Layout from "./Layout";
 import { useNavigate } from "react-router-dom";
@@ -16,9 +17,13 @@ export default function LoginPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
 
-  const { register, handleSubmit, setValue, watch } = useForm<
-    LoginForm | RegisterForm
-  >({ mode: "onChange" });
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<LoginForm | RegisterForm>({ mode: "onChange" });
 
   const months = [
     "January",
@@ -45,6 +50,12 @@ export default function LoginPage() {
     try {
       if (isRegistering) {
         const d = data as RegisterForm;
+
+        if (d.password !== d.confirmPassword) {
+          toast.error("Passwords do not match");
+          setLoading(false);
+          return;
+        }
 
         const { data: signUpData, error: signUpError } =
           await supabase.auth.signUp({
@@ -97,7 +108,7 @@ export default function LoginPage() {
           .from("profiles")
           .select("role")
           .eq("id", userData.user.id)
-          .single();
+          .maybeSingle();
 
         toast.success("You are logged in successfully!");
         if (profile?.role === "admin") navigate("/admin");
@@ -150,6 +161,32 @@ export default function LoginPage() {
                   {...register("password", { required: true })}
                 />
               </div>
+
+              {/* Confirm Password */}
+              {isRegistering && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    className={inputClass}
+                    {...register("confirmPassword", {
+                      required: "Please confirm your password",
+                      validate: (value) =>
+                        value === watch("password") || "Passwords do not match",
+                    })}
+                  />
+                  {(errors as FieldErrors<RegisterForm>).confirmPassword && (
+                    <p className="text-sm text-red-600 mt-1">
+                      {
+                        (errors as FieldErrors<RegisterForm>).confirmPassword
+                          ?.message
+                      }
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Registration Fields */}
               {isRegistering && (
