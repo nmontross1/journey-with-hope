@@ -44,11 +44,11 @@ export default function EventsPage() {
         ) : events.length === 0 ? (
           <p className="text-gray-500 text-center">No upcoming events.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="flex flex-wrap justify-center gap-8">
             {events.map((event) => (
               <div
                 key={event.id}
-                className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden"
+                className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden w-full max-w-md"
               >
                 {event.image && (
                   <img
@@ -64,11 +64,12 @@ export default function EventsPage() {
                   </h2>
 
                   <p className="text-gray-600 mb-2">
-                    <strong>When:</strong> {formatUTCDate(event.start_date)} -
+                    <strong>When:</strong> {formatUTCDate(event.start_date)} –{" "}
                     {formatUTCDate(event.end_date)}
                   </p>
+
                   {(event.location || event.address) && (
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 mb-2">
                       <strong>Where:</strong>{" "}
                       {[event.location, event.address]
                         .filter(Boolean)
@@ -76,9 +77,9 @@ export default function EventsPage() {
                     </p>
                   )}
 
-                  <br />
-
-                  <p className="text-gray-600 mb-2">{event.description}</p>
+                  {event.description && (
+                    <p className="text-gray-600 mt-2">{event.description}</p>
+                  )}
                 </div>
               </div>
             ))}
