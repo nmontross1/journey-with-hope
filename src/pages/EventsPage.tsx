@@ -15,7 +15,7 @@ export default function EventsPage() {
         const { data, error } = await supabase
           .from("events")
           .select("*")
-          .order("date", { ascending: true });
+          .order("start_date", { ascending: true });
 
         if (error) throw error;
 
@@ -29,6 +29,13 @@ export default function EventsPage() {
 
     fetchEvents();
   }, []);
+
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
 
   return (
     <Layout>
@@ -62,18 +69,23 @@ export default function EventsPage() {
                     {event.title}
                   </h2>
 
-                  {event.description && (
-                    <p className="text-gray-600 mb-1">{event.description}</p>
+                  <p className="text-gray-600 mb-2">
+                    <strong>When:</strong> {formatDate(event.start_date)}
+                    {event.end_date && <> – {formatDate(event.end_date)}</>}
+                  </p>
+
+                  {(event.location || event.address) && (
+                    <p className="text-gray-600">
+                      <strong>Where:</strong>{" "}
+                      {[event.location, event.address]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </p>
                   )}
 
-                  <p className="text-gray-600 mb-3">
-                    <strong>Date:</strong>{" "}
-                    {new Date(event.date).toLocaleString("en-US", {
-                      timeZone: "America/New_York",
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </p>
+                  <br />
+
+                  <p className="text-gray-600 mb-2">{event.description}</p>
                 </div>
               </div>
             ))}

@@ -99,11 +99,15 @@ create table public.orders (
 
 -- events table
 create table public.events (
-  id uuid primary key,
+  id uuid not null,
   title text not null,
   description text not null,
-  date timestamptz not null,
-  image text,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
+  start_date timestamp with time zone not null,
+  image text null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  location text null,
+  address text null,
+  end_date timestamp with time zone null,
+  constraint events_pkey primary key (id)
+) TABLESPACE pg_default;

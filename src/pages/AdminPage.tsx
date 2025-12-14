@@ -44,7 +44,11 @@ export default function AdminPage() {
   const [newEvent, setNewEvent] = useState({
     title: "",
     description: "",
-    date: "",
+    start_date: "",
+    end_date: "",
+    location: "",
+    address: "",
+    image: "",
   });
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -80,7 +84,10 @@ export default function AdminPage() {
           .from("orders")
           .select("*")
           .order("created_at", { ascending: false }),
-        supabase.from("events").select("*").order("date", { ascending: true }),
+        supabase
+          .from("events")
+          .select("*")
+          .order("start_date", { ascending: true }),
       ]);
 
       setProducts(productsData || []);
@@ -222,26 +229,41 @@ export default function AdminPage() {
 
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEvent.title || !newEvent.date) {
-      alert("Event title and date are required");
+
+    if (!newEvent.title || !newEvent.start_date) {
+      alert("Event title and start date are required");
       return;
     }
 
     try {
       const eventToAdd: Event = {
-        ...newEvent,
         id: crypto.randomUUID(),
+        title: newEvent.title,
+        description: newEvent.description,
+        start_date: newEvent.start_date,
+        end_date: newEvent.end_date || null,
+        location: newEvent.location,
+        address: newEvent.address,
+        image: newEvent.image || null,
       };
 
       await addEventMutation.mutateAsync(eventToAdd);
 
-      const { data: eventsData } = await supabase
+      const { data } = await supabase
         .from("events")
         .select("*")
-        .order("date", { ascending: true });
+        .order("start_date", { ascending: true });
 
-      setEvents(eventsData || []);
-      setNewEvent({ title: "", description: "", date: "" });
+      setEvents(data || []);
+      setNewEvent({
+        title: "",
+        description: "",
+        start_date: "",
+        end_date: "",
+        location: "",
+        address: "",
+        image: "",
+      });
     } catch (err: any) {
       alert("Add event failed: " + (err.message || err));
     }
@@ -624,22 +646,96 @@ export default function AdminPage() {
               onSubmit={handleAddEvent}
               className="grid md:grid-cols-2 gap-5"
             >
-              {["title", "date", "description"].map((field) => (
+              <input
+                type="text"
+                placeholder="Title"
+                className="border rounded p-3 text-sm"
+                value={newEvent.title}
+                onChange={(e) =>
+                  setNewEvent((p) => ({ ...p, title: e.target.value }))
+                }
+                required
+              />
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="start_date"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Start Date & Time
+                </label>
+
                 <input
-                  key={field}
-                  type={field === "date" ? "datetime-local" : "text"}
-                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                  className={`border rounded p-3 text-sm ${field === "description" ? "md:col-span-2" : ""}`}
-                  value={(newEvent as any)[field]}
+                  id="start_date"
+                  type="datetime-local"
+                  step="900"
+                  className="border rounded p-3 text-sm"
+                  value={newEvent.start_date}
                   onChange={(e) =>
-                    setNewEvent((prev) => ({
-                      ...prev,
-                      [field]: e.target.value,
-                    }))
+                    setNewEvent((p) => ({ ...p, start_date: e.target.value }))
                   }
-                  required={field !== "description"}
+                  required
                 />
-              ))}
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="start_date"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  End Date & Time
+                </label>
+
+                <input
+                  id="start_date"
+                  type="datetime-local"
+                  step="900"
+                  className="border rounded p-3 text-sm"
+                  value={newEvent.end_date}
+                  onChange={(e) =>
+                    setNewEvent((p) => ({ ...p, end_date: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+
+              <input
+                type="text"
+                placeholder="Location"
+                className="border rounded p-3 text-sm"
+                value={newEvent.location}
+                onChange={(e) =>
+                  setNewEvent((p) => ({ ...p, location: e.target.value }))
+                }
+              />
+
+              <input
+                type="text"
+                placeholder="Address"
+                className="border rounded p-3 text-sm md:col-span-2"
+                value={newEvent.address}
+                onChange={(e) =>
+                  setNewEvent((p) => ({ ...p, address: e.target.value }))
+                }
+              />
+
+              <input
+                type="text"
+                placeholder="Image URL (optional)"
+                className="border rounded p-3 text-sm md:col-span-2"
+                value={newEvent.image}
+                onChange={(e) =>
+                  setNewEvent((p) => ({ ...p, image: e.target.value }))
+                }
+              />
+
+              <textarea
+                placeholder="Description"
+                className="border rounded p-3 text-sm md:col-span-2"
+                value={newEvent.description}
+                onChange={(e) =>
+                  setNewEvent((p) => ({ ...p, description: e.target.value }))
+                }
+              />
+
               <button
                 type="submit"
                 className="py-3 rounded col-span-full font-medium"
@@ -662,14 +758,31 @@ export default function AdminPage() {
                     {e.title}
                   </p>
                   <p className="text-sm" style={{ color: `${brandColor}cc` }}>
-                    {new Date(e.date).toLocaleString("en-US", {
+                    {new Date(e.start_date).toLocaleString("en-US", {
                       timeZone: "America/New_York",
                     })}
+                    {e.end_date && (
+                      <>
+                        {" "}
+                        –{" "}
+                        {new Date(e.end_date).toLocaleString("en-US", {
+                          timeZone: "America/New_York",
+                        })}
+                      </>
+                    )}
                   </p>
+
+                  {(e.location || e.address) && (
+                    <p className="text-sm text-gray-700">
+                      {[e.location, e.address].filter(Boolean).join(", ")}
+                    </p>
+                  )}
+
                   {e.description && (
                     <p className="text-sm text-gray-700">{e.description}</p>
                   )}
                 </div>
+
                 <button
                   onClick={() => handleDeleteEvent(e.id)}
                   className="text-red-600 hover:underline font-semibold text-sm"
