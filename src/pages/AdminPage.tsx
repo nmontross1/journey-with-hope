@@ -9,7 +9,7 @@ import { useAddEvent } from "@/hooks/useAddEvent";
 import { useDeleteEvent } from "@/hooks/useDeleteEvent";
 import { supabase } from "@/libs/supabaseClient";
 import { FiPlus } from "react-icons/fi";
-import { getNowInNY } from "@/utils/utils.ts";
+import { getNowInNY, formatUTCDate } from "@/utils/utils.ts";
 import Logo from "@/components/Logo";
 import type { Product } from "@/types/Product.ts";
 import type { Event } from "@/types/Event.ts";
@@ -757,27 +757,19 @@ export default function AdminPage() {
                   <p className="font-semibold" style={{ color: brandColor }}>
                     {e.title}
                   </p>
-                  <p className="text-sm" style={{ color: `${brandColor}cc` }}>
-                    {new Date(e.start_date).toLocaleString("en-US", {
-                      timeZone: "America/New_York",
-                    })}
-                    {e.end_date && (
-                      <>
-                        {" "}
-                        –{" "}
-                        {new Date(e.end_date).toLocaleString("en-US", {
-                          timeZone: "America/New_York",
-                        })}
-                      </>
-                    )}
+                  <br />
+                  <p className="text-sm text-gray-600">
+                    <strong>When:</strong> {formatUTCDate(e.start_date)} –{" "}
+                    {formatUTCDate(e.end_date)}
                   </p>
-
+                  <br />
                   {(e.location || e.address) && (
                     <p className="text-sm text-gray-700">
+                      <strong>Where:</strong>{" "}
                       {[e.location, e.address].filter(Boolean).join(", ")}
                     </p>
                   )}
-
+                  <br />
                   {e.description && (
                     <p className="text-sm text-gray-700">{e.description}</p>
                   )}

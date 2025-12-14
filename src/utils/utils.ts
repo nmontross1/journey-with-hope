@@ -143,3 +143,18 @@ export function getNowInNY(): Date {
 export function getTodayString(): string {
   return formatDate(getNowInNY());
 }
+
+export function formatUTCDate(utcString: string | undefined | null) {
+  if (!utcString) return "";
+
+  const date = new Date(utcString); // Date constructor parses UTC correctly
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC", // or omit to use user's local timezone
+  });
+}

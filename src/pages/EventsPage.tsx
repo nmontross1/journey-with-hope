@@ -3,6 +3,7 @@ import Layout from "./Layout";
 import Logo from "@/components/Logo";
 import { supabase } from "@/libs/supabaseClient";
 import type { Event } from "@/types/Event";
+import { formatUTCDate } from "@/utils/utils";
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -29,13 +30,6 @@ export default function EventsPage() {
 
     fetchEvents();
   }, []);
-
-  const formatDate = (date: string) =>
-    new Date(date).toLocaleString("en-US", {
-      timeZone: "America/New_York",
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
 
   return (
     <Layout>
@@ -70,10 +64,9 @@ export default function EventsPage() {
                   </h2>
 
                   <p className="text-gray-600 mb-2">
-                    <strong>When:</strong> {formatDate(event.start_date)}
-                    {event.end_date && <> – {formatDate(event.end_date)}</>}
+                    <strong>When:</strong> {formatUTCDate(event.start_date)} -
+                    {formatUTCDate(event.end_date)}
                   </p>
-
                   {(event.location || event.address) && (
                     <p className="text-gray-600">
                       <strong>Where:</strong>{" "}
