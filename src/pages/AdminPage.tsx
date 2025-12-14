@@ -678,14 +678,14 @@ export default function AdminPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label
-                  htmlFor="start_date"
+                  htmlFor="end_date"
                   className="text-sm font-medium text-gray-700"
                 >
                   End Date & Time
                 </label>
 
                 <input
-                  id="start_date"
+                  id="end_date"
                   type="datetime-local"
                   step="900"
                   className="border rounded p-3 text-sm"
