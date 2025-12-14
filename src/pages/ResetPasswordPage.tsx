@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/libs/supabaseClient";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
