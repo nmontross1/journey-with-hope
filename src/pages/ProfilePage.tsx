@@ -129,11 +129,6 @@ export default function ProfilePage() {
                 Welcome, {profile.name || "User"}!
               </h2>
             )}
-            <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100 break-words whitespace-normal w-full max-w-full overflow-hidden">
-              <p>
-                <strong>User ID:</strong> {userId}
-              </p>
-            </div>
           </div>
         </div>
 
