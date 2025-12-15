@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Layout from "./Layout";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/libs/supabaseClient";
+import { toast } from "react-toastify";
 import Logo from "@/components/Logo";
 
 const brandColor = "#d6c47f";
@@ -25,30 +26,19 @@ export default function CartPage() {
   }, []);
 
   // --- Checkout handler ---
-  const handleCheckout = async () => {
-    if (!user || !cart || cart.length === 0) return;
+const handleCheckout = async () => {
+  if (!user) {
+    toast.info("You must have an account to place an order.", {
+      autoClose: 3000,
+    });
+    return;
+  }
 
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ user_id: user.id, cart }),
-      },
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("[CartPage] Checkout error:", errorData);
-      return;
-    }
-
-    const data = await response.json();
-    if (data.url) window.location.href = data.url;
-  };
+  if (!cart || cart.length === 0) {
+    toast.warning("Your cart is empty.");
+    return;
+  }
+}
 
   const inputClass =
     "w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-50";
