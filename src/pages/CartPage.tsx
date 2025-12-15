@@ -38,6 +38,27 @@ const handleCheckout = async () => {
     toast.warning("Your cart is empty.");
     return;
   }
+
+   const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ user_id: user.id, cart }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("[CartPage] Checkout error:", errorData);
+      return;
+    }
+
+    const data = await response.json();
+    if (data.url) window.location.href = data.url;
 }
 
   const inputClass =
