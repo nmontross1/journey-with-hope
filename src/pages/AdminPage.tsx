@@ -11,6 +11,7 @@ import { supabase } from "@/libs/supabaseClient";
 import { FiPlus } from "react-icons/fi";
 import { getNowInNY, formatUTCDate } from "@/utils/utils.ts";
 import Logo from "@/components/Logo";
+import ImageUpload from "@/components/ImageUpload";
 import type { Product } from "@/types/Product.ts";
 import type { Event } from "@/types/Event.ts";
 
@@ -549,25 +550,14 @@ export default function AdminPage() {
               onSubmit={handleAddProduct}
               className="grid md:grid-cols-2 gap-5"
             >
-              {[
-                "name",
-                "type",
-                "price",
-                "quantity",
-                "image",
-                "description",
-              ].map((field) => (
+              {["name", "type", "price", "quantity"].map((field) => (
                 <input
                   key={field}
                   type={
                     ["price", "quantity"].includes(field) ? "number" : "text"
                   }
                   placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                  className={`border rounded p-3 text-sm ${
-                    ["image", "description"].includes(field)
-                      ? "md:col-span-2"
-                      : ""
-                  }`}
+                  className="border rounded p-3 text-sm"
                   value={(newProduct as any)[field]}
                   onChange={(e) =>
                     setNewProduct((prev) => ({
@@ -578,6 +568,28 @@ export default function AdminPage() {
                   required
                 />
               ))}
+
+              {/* 🔽 Supabase Image Upload */}
+              <div className="md:col-span-2">
+                <ImageUpload
+                  bucket="images"
+                  folder="products"
+                  value={newProduct.image}
+                  onUpload={(url) =>
+                    setNewProduct((p) => ({ ...p, image: url }))
+                  }
+                />
+              </div>
+
+              <textarea
+                placeholder="Description"
+                className="border rounded p-3 text-sm md:col-span-2"
+                value={newProduct.description}
+                onChange={(e) =>
+                  setNewProduct((p) => ({ ...p, description: e.target.value }))
+                }
+                required
+              />
 
               <button
                 type="submit"
@@ -717,14 +729,11 @@ export default function AdminPage() {
                 }
               />
 
-              <input
-                type="text"
-                placeholder="Image URL (optional)"
-                className="border rounded p-3 text-sm md:col-span-2"
+              <ImageUpload
+                bucket="images"
+                folder="events"
                 value={newEvent.image}
-                onChange={(e) =>
-                  setNewEvent((p) => ({ ...p, image: e.target.value }))
-                }
+                onUpload={(url) => setNewEvent((p) => ({ ...p, image: url }))}
               />
 
               <textarea
