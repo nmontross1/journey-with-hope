@@ -45,6 +45,7 @@ Deno.serve(async (req) => {
       stripe_session_id: session.id,
       shipping_address: session.customer_details?.address ?? null,
       customer_name: session.customer_details?.name ?? null,
+      customer_phone: session.customer_details?.phone ?? null,
     });
 
     if (error) {

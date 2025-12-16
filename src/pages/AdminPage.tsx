@@ -418,6 +418,11 @@ export default function AdminPage() {
                   </ul>
                 </div>
 
+                <div className="text-sm mt-1">
+                  <span className="font-medium">Phone: </span>
+                  {order.customer_phone || "N/A"}
+                </div>
+
                 {order.shipping_address && (
                   <div className="text-sm mt-3">
                     <span className="font-medium">Shipping Address:</span>

@@ -67,6 +67,9 @@ Deno.serve(async (req) => {
       })),
       mode: "payment",
       client_reference_id: user_id,
+      phone_number_collection: {
+        enabled: true,
+      },
       success_url: `${FRONTEND_URL}/profile`,
       cancel_url: `${FRONTEND_URL}/cart`,
       metadata: { user_id },

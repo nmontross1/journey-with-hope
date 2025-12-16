@@ -93,6 +93,7 @@ create table public.orders (
   shipping_address jsonb null,
   created_at timestamp with time zone null default now(),
   customer_name text null,
+  customer_phone text null,
   constraint orders_pkey primary key (id),
   constraint orders_user_id_fkey foreign KEY (user_id) references auth.users (id)
 ) TABLESPACE pg_default;
