@@ -64,13 +64,13 @@ export default function EventsPage() {
                   </h2>
 
                   <p className="text-gray-600 mb-2">
-                    <strong>When:</strong> {formatUTCDate(event.start_date)} –
+                    <strong>When: </strong> {formatUTCDate(event.start_date)} –
                     {formatUTCDate(event.end_date)}
                   </p>
 
                   {(event.location || event.address) && (
                     <p className="text-gray-600 mb-2">
-                      <strong>Where:</strong>
+                      <strong>Where: </strong>
                       {[event.location, event.address]
                         .filter(Boolean)
                         .join(", ")}
