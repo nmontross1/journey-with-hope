@@ -47,11 +47,10 @@ export default function ProfilePage() {
   const isAdmin = profile?.role === "admin";
   const userId = user?.id ?? "";
 
-  const {
-    orders,
-    loading: loadingOrders,
-    error: orderError,
-  } = useOrder(userId, false);
+  const { orders, loading: loadingOrders, error: orderError } = useOrder(
+    userId,
+    false
+  );
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -88,10 +87,12 @@ export default function ProfilePage() {
   const nowNY = new Date();
   const enrichedBookings = bookings
     .map((booking) => {
-      const slots = bookingSlots.filter((bs) => bs.booking_id === booking.id);
+      const slots = bookingSlots.filter(
+        (bs) => bs.booking_id === booking.id
+      );
       if (!slots.length) return null;
       const firstSlot = availability.find(
-        (a) => a.id === slots[0].availability_id,
+        (a) => a.id === slots[0].availability_id
       );
       if (!firstSlot) return null;
       const slotDate = new Date(firstSlot.available_from);
@@ -111,10 +112,10 @@ export default function ProfilePage() {
   return (
     <Layout>
       <Logo size="lg" />
-      <div className="max-w-4xl mx-auto py-6 px-4 space-y-6 overflow-x-hidden">
-        {/* My Profile */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden w-full max-w-full">
-          <div className="p-6" style={{ backgroundColor: brandColor }}>
+      <div className="w-full max-w-7xl mx-auto py-16 px-4 md:px-6 space-y-10">
+        {/* -------------------- My Profile -------------------- */}
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full max-w-full">
+          <div className="p-6 border-b" style={{ backgroundColor: brandColor }}>
             <h1 className="text-2xl md:text-3xl font-bold text-center text-white">
               My Profile
             </h1>
@@ -122,26 +123,25 @@ export default function ProfilePage() {
           <div className="p-6 space-y-4">
             {profile && (
               <h2
-                className="text-xl md:text-2xl font-semibold break-words whitespace-normal"
+                className="text-xl md:text-2xl font-semibold"
                 style={{ color: brandColor }}
               >
                 Welcome, {profile.name || "User"}!
               </h2>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* My Orders */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden w-full max-w-full">
-          <div className="p-6" style={{ backgroundColor: brandColor }}>
+        {/* -------------------- My Orders -------------------- */}
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full max-w-full">
+          <div className="p-6 border-b" style={{ backgroundColor: brandColor }}>
             <h1 className="text-2xl md:text-3xl font-bold text-center text-white">
               My Orders
             </h1>
           </div>
+
           <div className="p-6 space-y-4">
-            {loadingOrders && (
-              <p className="text-gray-600">Loading orders...</p>
-            )}
+            {loadingOrders && <p className="text-gray-600">Loading orders...</p>}
             {orderError && <p className="text-red-500">{orderError}</p>}
             {!loadingOrders && orders.length === 0 && (
               <p className="text-gray-500">No orders found.</p>
@@ -151,10 +151,10 @@ export default function ProfilePage() {
               {orders.map((order: OrderData) => (
                 <div
                   key={order.stripe_session_id}
-                  className="flex-1 min-w-[280px] bg-white rounded-xl shadow-sm p-4 break-words whitespace-normal w-full max-w-full overflow-hidden"
+                  className="flex-1 min-w-[280px] bg-gray-50 rounded-xl shadow-sm p-4 break-words whitespace-normal w-full max-w-full overflow-hidden border border-gray-100"
                 >
                   <p>
-                    <strong>Order Date:</strong>
+                    <strong>Order Date:</strong>{" "}
                     {order.created_at
                       ? new Date(order.created_at).toLocaleString("en-US", {
                           timeZone: "America/New_York",
@@ -162,8 +162,7 @@ export default function ProfilePage() {
                       : "N/A"}
                   </p>
                   <p>
-                    <strong>Order ID:</strong>
-                    {order.stripe_session_id || "N/A"}
+                    <strong>Order ID:</strong> {order.stripe_session_id || "N/A"}
                   </p>
                   <p>
                     <strong>Status:</strong> {order.status || "N/A"}
@@ -173,7 +172,7 @@ export default function ProfilePage() {
                     {order.amount?.toFixed(2) ?? "0.00"}
                   </p>
                   {order.items?.length > 0 && (
-                    <ul className="list-disc ml-5 mt-1 break-words whitespace-normal">
+                    <ul className="list-disc ml-5 mt-1 break-words whitespace-normal text-sm text-gray-700">
                       {order.items.map((item, idx) => (
                         <li key={idx}>
                           {item.name || "N/A"} x {item.quantity || 0} ($
@@ -186,25 +185,26 @@ export default function ProfilePage() {
               ))}
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* My Appointments */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden w-full max-w-full">
-          <div className="p-6" style={{ backgroundColor: brandColor }}>
+        {/* -------------------- My Appointments -------------------- */}
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full max-w-full">
+          <div className="p-6 border-b" style={{ backgroundColor: brandColor }}>
             <h1 className="text-2xl md:text-3xl font-bold text-center text-white">
               My Appointments
             </h1>
           </div>
+
           <div className="p-6 space-y-4">
             {enrichedBookings.length === 0 && (
-              <p className="text-gray-500">No upcoming appointments.</p>
+              <p className="text-gray-500 text-center">No upcoming appointments.</p>
             )}
 
             <div className="flex flex-col md:flex-row flex-wrap gap-4 w-full max-w-full overflow-x-hidden">
               {enrichedBookings.map((b) => (
                 <div
                   key={b.id}
-                  className="flex-1 min-w-[280px] bg-white rounded-xl shadow-sm p-4 break-words whitespace-normal w-full max-w-full overflow-hidden"
+                  className="flex-1 min-w-[280px] bg-gray-50 rounded-xl shadow-sm p-4 break-words whitespace-normal w-full max-w-full overflow-hidden border border-gray-100"
                 >
                   <p>
                     <strong>Service:</strong> {b.service_type || "N/A"}
@@ -221,7 +221,7 @@ export default function ProfilePage() {
               ))}
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </Layout>
   );
