@@ -121,7 +121,7 @@ export default function ShopPage() {
 
   return (
     <Layout>
-      <Logo />
+      <Logo size="lg" />
 
       {/* Cart Icon */}
       <div className="fixed top-4 right-4 z-50">

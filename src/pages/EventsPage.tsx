@@ -33,7 +33,7 @@ export default function EventsPage() {
 
   return (
     <Layout>
-      <Logo />
+      <Logo size="lg" />
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-bold text-[#d6c47f] mb-10 text-center">
           Upcoming Events
@@ -64,13 +64,13 @@ export default function EventsPage() {
                   </h2>
 
                   <p className="text-gray-600 mb-2">
-                    <strong>When:</strong> {formatUTCDate(event.start_date)} –{" "}
+                    <strong>When:</strong> {formatUTCDate(event.start_date)} –
                     {formatUTCDate(event.end_date)}
                   </p>
 
                   {(event.location || event.address) && (
                     <p className="text-gray-600 mb-2">
-                      <strong>Where:</strong>{" "}
+                      <strong>Where:</strong>
                       {[event.location, event.address]
                         .filter(Boolean)
                         .join(", ")}

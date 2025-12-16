@@ -110,8 +110,7 @@ export default function ProfilePage() {
 
   return (
     <Layout>
-      <Logo />
-
+      <Logo size="lg" />
       <div className="max-w-4xl mx-auto py-6 px-4 space-y-6 overflow-x-hidden">
         {/* My Profile */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden w-full max-w-full">
@@ -155,7 +154,7 @@ export default function ProfilePage() {
                   className="flex-1 min-w-[280px] bg-white rounded-xl shadow-sm p-4 break-words whitespace-normal w-full max-w-full overflow-hidden"
                 >
                   <p>
-                    <strong>Order Date:</strong>{" "}
+                    <strong>Order Date:</strong>
                     {order.created_at
                       ? new Date(order.created_at).toLocaleString("en-US", {
                           timeZone: "America/New_York",
@@ -163,7 +162,7 @@ export default function ProfilePage() {
                       : "N/A"}
                   </p>
                   <p>
-                    <strong>Order ID:</strong>{" "}
+                    <strong>Order ID:</strong>
                     {order.stripe_session_id || "N/A"}
                   </p>
                   <p>

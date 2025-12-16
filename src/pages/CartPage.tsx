@@ -63,7 +63,7 @@ export default function CartPage() {
 
   return (
     <Layout>
-      <Logo />
+      <Logo size="lg" />
 
       {/* Page container */}
       <div className="flex justify-center py-12 px-4">

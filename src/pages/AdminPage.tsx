@@ -284,62 +284,68 @@ export default function AdminPage() {
 
   return (
     <Layout>
-      <Logo />
+      <Logo size="lg" />
 
       <div className="w-full max-w-full overflow-x-hidden mx-auto py-16 px-4 md:px-6 space-y-10">
         {/* -------------------- UPCOMING APPOINTMENTS -------------------- */}
-        <section className="bg-white p-6 rounded-xl shadow space-y-4 w-full max-w-full">
-          <h2 className="text-xl font-semibold" style={{ color: brandColor }}>
-            Upcoming Appointments
-          </h2>
+        <section className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="px-6 py-4 border-b">
+            <h2
+              className="text-lg font-semibold tracking-tight"
+              style={{ color: brandColor }}
+            >
+              Upcoming Appointments
+            </h2>
+          </div>
 
-          <ul className="space-y-4 max-h-96 overflow-y-auto">
+          <ul className="p-6 space-y-4 max-h-96 overflow-y-auto">
             {enrichedBookings.map((b) => (
               <li
                 key={b.id}
-                className="border-l-4 rounded p-4 shadow-sm w-full"
-                style={{
-                  borderColor: brandColor,
-                  backgroundColor: `${brandColor}20`,
-                }}
+                className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 hover:bg-gray-50 transition"
+                style={{ borderLeft: `4px solid ${brandColor}` }}
               >
                 <div className="flex justify-between items-start gap-4">
-                  <div className="flex-1 min-w-0">
+                  {/* Details */}
+                  <div className="flex-1 min-w-0 space-y-1">
                     <div
-                      className="font-semibold"
+                      className="font-semibold text-base truncate"
                       style={{ color: brandColor }}
                     >
                       {b.profile?.name || "N/A"}
                     </div>
 
-                    <div className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">Time: </span> {b.time}
-                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-700">
+                      <div>
+                        <span className="font-medium">Time:</span> {b.time}
+                      </div>
 
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">Service: </span>
-                      <span className="capitalize">{b.service_type}</span>
-                    </div>
+                      <div>
+                        <span className="font-medium">Service:</span>
+                        <span className="capitalize">{b.service_type}</span>
+                      </div>
 
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">Birth Month: </span>
-                      {b.profile?.birth_month || "N/A"}
-                    </div>
+                      <div>
+                        <span className="font-medium">Birth Month:</span>
+                        {b.profile?.birth_month || "N/A"}
+                      </div>
 
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">Contact Method: </span>
-                      {b.profile?.contact_method || "N/A"}
-                    </div>
+                      <div>
+                        <span className="font-medium">Contact:</span>
+                        {b.profile?.contact_method || "N/A"}
+                      </div>
 
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">Phone: </span>
-                      {b.profile?.phone || "N/A"}
+                      <div className="sm:col-span-2">
+                        <span className="font-medium">Phone:</span>
+                        {b.profile?.phone || "N/A"}
+                      </div>
                     </div>
                   </div>
 
+                  {/* Action */}
                   <button
                     onClick={() => cancelBooking(b)}
-                    className="text-red-600 hover:text-red-700 font-semibold text-sm whitespace-nowrap"
+                    className="text-sm font-medium text-red-600 hover:text-red-700 transition whitespace-nowrap"
                   >
                     Cancel
                   </button>
@@ -348,7 +354,7 @@ export default function AdminPage() {
             ))}
 
             {enrichedBookings.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
+              <div className="py-12 text-center text-sm text-gray-500">
                 No upcoming appointments
               </div>
             )}
@@ -356,52 +362,59 @@ export default function AdminPage() {
         </section>
 
         {/* -------------------- RECENT ORDERS -------------------- */}
-        <section className="bg-white p-6 rounded-xl shadow space-y-4 w-full max-w-full">
-          <h2 className="text-xl font-semibold" style={{ color: brandColor }}>
-            Recent Orders
-          </h2>
+        <section className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="px-6 py-4 border-b">
+            <h2
+              className="text-lg font-semibold tracking-tight"
+              style={{ color: brandColor }}
+            >
+              Recent Orders
+            </h2>
+          </div>
 
-          <ul className="space-y-4 max-h-96 overflow-y-auto">
+          <ul className="p-6 space-y-4 max-h-96 overflow-y-auto">
             {orders.map((order) => (
               <li
                 key={order.id}
-                className="border-l-4 rounded p-4 shadow-sm"
-                style={{
-                  borderColor: brandColor,
-                  backgroundColor: `${brandColor}20`,
-                }}
+                className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 hover:bg-gray-50 transition"
+                style={{ borderLeft: `4px solid ${brandColor}` }}
               >
-                <div
-                  className="font-semibold text-lg"
-                  style={{ color: brandColor }}
-                >
-                  Order #{order.id}
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <span
+                    className="font-semibold text-base"
+                    style={{ color: brandColor }}
+                  >
+                    Order #{order.id}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {new Date(order.created_at).toLocaleString("en-US", {
+                      timeZone: "America/New_York",
+                    })}
+                  </span>
                 </div>
 
-                <div className="text-sm mt-1">
-                  <span className="font-medium">Date: </span>
-                  {new Date(order.created_at).toLocaleString("en-US", {
-                    timeZone: "America/New_York",
-                  })}
+                {/* Meta */}
+                <div className="mt-2 grid grid-cols-2 gap-y-1 text-sm text-gray-700">
+                  <div>
+                    <span className="font-medium">Amount:</span> ${order.amount}
+                  </div>
+                  <div>
+                    <span className="font-medium">Status:</span>
+                    <span className="capitalize">{order.status}</span>
+                  </div>
+                  <div className="col-span-2 break-all text-xs text-gray-500">
+                    <span className="font-medium">Stripe ID:</span>
+                    {order.stripe_session_id}
+                  </div>
                 </div>
 
-                <div className="text-sm mt-1">
-                  <span className="font-medium">Amount: </span>${order.amount}
-                </div>
-
-                <div className="text-sm">
-                  <span className="font-medium">Status: </span>
-                  {order.status}
-                </div>
-
-                <div className="text-sm break-words">
-                  <span className="font-medium">Stripe Order ID: </span>
-                  {order.stripe_session_id}
-                </div>
-
+                {/* Items */}
                 <div className="mt-3">
-                  <span className="font-medium text-sm">Items:</span>
-                  <ul className="ml-4 list-disc text-sm text-gray-700">
+                  <span className="text-sm font-medium text-gray-800">
+                    Items
+                  </span>
+                  <ul className="mt-1 ml-4 list-disc text-sm text-gray-600 space-y-0.5">
                     {Array.isArray(order.items) &&
                       (
                         order.items as {
@@ -418,23 +431,25 @@ export default function AdminPage() {
                   </ul>
                 </div>
 
-                <div className="text-sm mt-1">
-                  <span className="font-medium">Phone: </span>
+                {/* Contact */}
+                <div className="mt-3 text-sm text-gray-700">
+                  <span className="font-medium">Phone:</span>
                   {order.customer_phone || "N/A"}
                 </div>
 
+                {/* Shipping */}
                 {order.shipping_address && (
-                  <div className="text-sm mt-3">
-                    <span className="font-medium">Shipping Address:</span>
-                    <div className="ml-2">
-                      <div> {order.customer_name}</div>
+                  <div className="mt-3 text-sm text-gray-700">
+                    <span className="font-medium">Shipping Address</span>
+                    <div className="mt-1 ml-2 text-gray-600 space-y-0.5">
+                      <div>{order.customer_name}</div>
                       <div>{order.shipping_address.line1}</div>
                       {order.shipping_address.line2 && (
                         <div>{order.shipping_address.line2}</div>
                       )}
                       <div>
-                        {order.shipping_address.city},{" "}
-                        {order.shipping_address.state}{" "}
+                        {order.shipping_address.city},
+                        {order.shipping_address.state}
                         {order.shipping_address.postal_code}
                       </div>
                       <div>{order.shipping_address.country}</div>
@@ -445,7 +460,7 @@ export default function AdminPage() {
             ))}
 
             {orders.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
+              <div className="py-12 text-center text-sm text-gray-500">
                 No recent orders found
               </div>
             )}
@@ -453,87 +468,115 @@ export default function AdminPage() {
         </section>
 
         {/* -------------------- MANAGE AVAILABILITY -------------------- */}
-        <section className="bg-white p-6 rounded-xl shadow space-y-4 w-full max-w-full">
-          <h2 className="text-2xl font-semibold" style={{ color: brandColor }}>
-            Manage Availability
-          </h2>
-
-          <form
-            onSubmit={handleAddAvailabilityRange}
-            className="flex flex-col md:flex-row md:space-x-4 gap-3"
-          >
-            <input
-              type="datetime-local"
-              className="border p-2 rounded w-full"
-              value={availStartDateTime}
-              onChange={(e) => setAvailStartDateTime(e.target.value)}
-              required
-            />
-
-            <input
-              type="datetime-local"
-              className="border p-2 rounded w-full"
-              value={availEndDateTime}
-              onChange={(e) => setAvailEndDateTime(e.target.value)}
-              required
-            />
-
-            <button
-              type="submit"
-              className="py-2 px-4 rounded font-medium"
-              style={{ backgroundColor: brandColor, color: "white" }}
+        <section className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm">
+          {/* Header */}
+          <div className="px-6 py-4 border-b">
+            <h2
+              className="text-lg font-semibold tracking-tight"
+              style={{ color: brandColor }}
             >
-              Set Availability
-            </button>
-          </form>
+              Manage Availability
+            </h2>
+          </div>
 
-          <ul className="divide-y text-sm text-gray-800 max-h-64 overflow-y-auto">
-            {availability
-              .filter((slot) => new Date(slot.available_from) > nowNY)
-              .sort(
-                (a, b) =>
-                  new Date(a.available_from).getTime() -
-                  new Date(b.available_from).getTime(),
-              )
-              .map((slot) => (
-                <li
-                  key={slot.id}
-                  className="flex justify-between items-center py-2"
-                >
-                  <span>
-                    {new Date(slot.available_from).toLocaleString("en-US", {
-                      timeZone: "America/New_York",
-                    })}
-                  </span>
+          {/* Content */}
+          <div className="p-6 space-y-6">
+            {/* Form */}
+            <form
+              onSubmit={handleAddAvailabilityRange}
+              className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
+            >
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Start Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  value={availStartDateTime}
+                  onChange={(e) => setAvailStartDateTime(e.target.value)}
+                  required
+                />
+              </div>
 
-                  <button
-                    onClick={() => handleDeleteSlot(slot.id)}
-                    className="text-red-500 hover:underline"
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  End Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  value={availEndDateTime}
+                  onChange={(e) => setAvailEndDateTime(e.target.value)}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="h-10 rounded-lg text-sm font-medium shadow-sm transition hover:opacity-90"
+                style={{ backgroundColor: brandColor, color: "white" }}
+              >
+                Set Availability
+              </button>
+            </form>
+
+            {/* Availability List */}
+            <ul className="divide-y text-sm max-h-64 overflow-y-auto">
+              {availability
+                .filter((slot) => new Date(slot.available_from) > nowNY)
+                .sort(
+                  (a, b) =>
+                    new Date(a.available_from).getTime() -
+                    new Date(b.available_from).getTime(),
+                )
+                .map((slot) => (
+                  <li
+                    key={slot.id}
+                    className="flex justify-between items-center py-3"
                   >
-                    Remove
-                  </button>
-                </li>
-              ))}
-          </ul>
+                    <span className="text-gray-700">
+                      {new Date(slot.available_from).toLocaleString("en-US", {
+                        timeZone: "America/New_York",
+                      })}
+                    </span>
+
+                    <button
+                      onClick={() => handleDeleteSlot(slot.id)}
+                      className="text-sm font-medium text-red-600 hover:text-red-700 transition"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+
+              {availability.filter(
+                (slot) => new Date(slot.available_from) > nowNY,
+              ).length === 0 && (
+                <div className="py-8 text-center text-gray-500">
+                  No upcoming availability
+                </div>
+              )}
+            </ul>
+          </div>
         </section>
 
         {/* -------------------- MANAGE PRODUCTS -------------------- */}
-        <section className="bg-white p-6 rounded-xl shadow space-y-6 w-full max-w-full">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-            <div className="flex items-center gap-2">
+        <section className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm">
+          {/* Header */}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setExpandProductForm((p) => !p)}
-                className="flex items-center gap-2 px-3 py-1 rounded-md font-medium shadow-sm transition-colors"
-                style={{
-                  backgroundColor: brandColor,
-                  color: "white",
-                }}
+                className="inline-flex items-center justify-center h-9 w-9 rounded-lg shadow-sm transition hover:opacity-90"
+                style={{ backgroundColor: brandColor, color: "white" }}
+                aria-label="Add product"
               >
-                <FiPlus />
+                <FiPlus size={16} />
               </button>
 
               <h2
-                className="text-2xl font-semibold"
+                className="text-lg font-semibold tracking-tight"
                 style={{ color: brandColor }}
               >
                 Manage Products
@@ -543,115 +586,147 @@ export default function AdminPage() {
             {!expandProductForm && (
               <input
                 type="text"
-                placeholder="Search products..."
-                className="border p-2 rounded w-full md:w-64"
+                placeholder="Search products…"
+                className="w-full sm:w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             )}
           </div>
 
-          {expandProductForm && (
-            <form
-              onSubmit={handleAddProduct}
-              className="grid md:grid-cols-2 gap-5"
-            >
-              {["name", "type", "price", "quantity"].map((field) => (
-                <input
-                  key={field}
-                  type={
-                    ["price", "quantity"].includes(field) ? "number" : "text"
-                  }
-                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                  className="border rounded p-3 text-sm"
-                  value={(newProduct as any)[field]}
-                  onChange={(e) =>
-                    setNewProduct((prev) => ({
-                      ...prev,
-                      [field]: e.target.value,
-                    }))
-                  }
-                  required
-                />
+          {/* Content */}
+          <div className="p-6 space-y-6">
+            {/* Add Product Form */}
+            {expandProductForm && (
+              <form
+                onSubmit={handleAddProduct}
+                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              >
+                {["name", "type", "price", "quantity"].map((field) => (
+                  <div key={field} className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700 capitalize">
+                      {field}
+                    </label>
+                    <input
+                      type={
+                        ["price", "quantity"].includes(field)
+                          ? "number"
+                          : "text"
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                      value={(newProduct as any)[field]}
+                      onChange={(e) =>
+                        setNewProduct((prev) => ({
+                          ...prev,
+                          [field]: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                ))}
+
+                {/* Image Upload */}
+                <div className="md:col-span-2">
+                  <ImageUpload
+                    bucket="images"
+                    folder="products"
+                    value={newProduct.image}
+                    onUpload={(url) =>
+                      setNewProduct((p) => ({ ...p, image: url }))
+                    }
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Description
+                  </label>
+                  <textarea
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                    rows={4}
+                    value={newProduct.description}
+                    onChange={(e) =>
+                      setNewProduct((p) => ({
+                        ...p,
+                        description: e.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={addProductMutation.isPending}
+                  className="md:col-span-2 h-11 rounded-lg text-sm font-medium shadow-sm transition hover:opacity-90"
+                  style={{ backgroundColor: brandColor, color: "white" }}
+                >
+                  {addProductMutation.isPending ? "Adding…" : "Add Product"}
+                </button>
+              </form>
+            )}
+
+            {/* Product List */}
+            <ul className="space-y-3 max-h-96 overflow-y-auto">
+              {filteredProducts.map((p) => (
+                <li
+                  key={p.id}
+                  className="flex items-center gap-4 rounded-xl border border-gray-100 bg-gray-50 p-3"
+                >
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    className="h-14 w-14 rounded-lg object-cover flex-shrink-0"
+                  />
+
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="truncate font-medium"
+                      style={{ color: brandColor }}
+                    >
+                      {p.name}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      ${p.price.toFixed(2)} · {p.type} · Qty {p.quantity}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => handleDeleteProduct(Number(p.id))}
+                    className="text-sm font-medium text-red-600 hover:text-red-700 transition"
+                  >
+                    Delete
+                  </button>
+                </li>
               ))}
 
-              {/* 🔽 Supabase Image Upload */}
-              <div className="md:col-span-2">
-                <ImageUpload
-                  bucket="images"
-                  folder="products"
-                  value={newProduct.image}
-                  onUpload={(url) =>
-                    setNewProduct((p) => ({ ...p, image: url }))
-                  }
-                />
-              </div>
-
-              <textarea
-                placeholder="Description"
-                className="border rounded p-3 text-sm md:col-span-2"
-                value={newProduct.description}
-                onChange={(e) =>
-                  setNewProduct((p) => ({ ...p, description: e.target.value }))
-                }
-                required
-              />
-
-              <button
-                type="submit"
-                disabled={addProductMutation.isPending}
-                className="py-3 rounded col-span-full font-medium"
-                style={{ backgroundColor: brandColor, color: "white" }}
-              >
-                {addProductMutation.isPending ? "Adding..." : "Add Product"}
-              </button>
-            </form>
-          )}
-
-          <ul className="space-y-3 max-h-96 overflow-y-auto">
-            {filteredProducts.map((p) => (
-              <li
-                key={p.id}
-                className="flex gap-4 items-center rounded p-3 shadow-sm"
-                style={{ backgroundColor: `${brandColor}20` }}
-              >
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  className="w-14 h-14 rounded-md object-cover"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold" style={{ color: brandColor }}>
-                    {p.name}
-                  </p>
-                  <p className="text-sm" style={{ color: `${brandColor}cc` }}>
-                    ${p.price.toFixed(2)} · {p.type} · Qty: {p.quantity}
-                  </p>
+              {filteredProducts.length === 0 && (
+                <div className="py-10 text-center text-sm text-gray-500">
+                  No products found
                 </div>
-                <button
-                  onClick={() => handleDeleteProduct(Number(p.id))}
-                  className="text-red-600 hover:text-red-700 font-semibold text-sm"
-                >
-                  Delete
-                </button>
-              </li>
-            ))}
-          </ul>
+              )}
+            </ul>
+          </div>
         </section>
 
         {/* -------------------- MANAGE EVENTS -------------------- */}
-        <section className="bg-white p-6 rounded-xl shadow space-y-6 w-full max-w-full">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-            <div className="flex items-center gap-2">
+        <section className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 px-6 py-4 border-b">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setExpandEventForm((p) => !p)}
-                className="flex items-center gap-2 px-3 py-1 rounded-md font-medium shadow-sm transition-colors"
+                className="inline-flex items-center justify-center h-9 w-9 rounded-lg shadow-sm transition hover:opacity-90"
                 style={{ backgroundColor: brandColor, color: "white" }}
+                aria-label="Add event"
               >
-                <FiPlus />
+                <FiPlus size={16} />
               </button>
+
               <h2
-                className="text-2xl font-semibold"
+                className="text-lg font-semibold tracking-tight"
                 style={{ color: brandColor }}
               >
                 Manage Events
@@ -659,146 +734,190 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {expandEventForm && (
-            <form
-              onSubmit={handleAddEvent}
-              className="grid md:grid-cols-2 gap-5"
-            >
-              <input
-                type="text"
-                placeholder="Title"
-                className="border rounded p-3 text-sm"
-                value={newEvent.title}
-                onChange={(e) =>
-                  setNewEvent((p) => ({ ...p, title: e.target.value }))
-                }
-                required
-              />
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="start_date"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Start Date & Time
-                </label>
-
-                <input
-                  id="start_date"
-                  type="datetime-local"
-                  step="900"
-                  className="border rounded p-3 text-sm"
-                  value={newEvent.start_date}
-                  onChange={(e) =>
-                    setNewEvent((p) => ({ ...p, start_date: e.target.value }))
-                  }
-                  required
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="end_date"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  End Date & Time
-                </label>
-
-                <input
-                  id="end_date"
-                  type="datetime-local"
-                  step="900"
-                  className="border rounded p-3 text-sm"
-                  value={newEvent.end_date}
-                  onChange={(e) =>
-                    setNewEvent((p) => ({ ...p, end_date: e.target.value }))
-                  }
-                  required
-                />
-              </div>
-
-              <input
-                type="text"
-                placeholder="Location"
-                className="border rounded p-3 text-sm"
-                value={newEvent.location}
-                onChange={(e) =>
-                  setNewEvent((p) => ({ ...p, location: e.target.value }))
-                }
-              />
-
-              <input
-                type="text"
-                placeholder="Address"
-                className="border rounded p-3 text-sm md:col-span-2"
-                value={newEvent.address}
-                onChange={(e) =>
-                  setNewEvent((p) => ({ ...p, address: e.target.value }))
-                }
-              />
-
-              <ImageUpload
-                bucket="images"
-                folder="events"
-                value={newEvent.image}
-                onUpload={(url) => setNewEvent((p) => ({ ...p, image: url }))}
-              />
-
-              <textarea
-                placeholder="Description"
-                className="border rounded p-3 text-sm md:col-span-2"
-                value={newEvent.description}
-                onChange={(e) =>
-                  setNewEvent((p) => ({ ...p, description: e.target.value }))
-                }
-              />
-
-              <button
-                type="submit"
-                className="py-3 rounded col-span-full font-medium"
-                style={{ backgroundColor: brandColor, color: "white" }}
+          {/* Content */}
+          <div className="p-6 space-y-6">
+            {/* Add Event Form */}
+            {expandEventForm && (
+              <form
+                onSubmit={handleAddEvent}
+                className="grid grid-cols-1 md:grid-cols-2 gap-4"
               >
-                Add Event
-              </button>
-            </form>
-          )}
+                {/* Title */}
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                    value={newEvent.title}
+                    onChange={(e) =>
+                      setNewEvent((p) => ({ ...p, title: e.target.value }))
+                    }
+                    required
+                  />
+                </div>
 
-          <ul className="space-y-3 max-h-96 overflow-y-auto">
-            {events.map((e) => (
-              <li
-                key={e.id}
-                className="flex gap-4 items-center rounded p-3 shadow-sm"
-                style={{ backgroundColor: `${brandColor}20` }}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold" style={{ color: brandColor }}>
-                    {e.title}
-                  </p>
-                  <br />
-                  <p className="text-sm text-gray-600">
-                    <strong>When:</strong> {formatUTCDate(e.start_date)} –{" "}
-                    {formatUTCDate(e.end_date)}
-                  </p>
-                  <br />
-                  {(e.location || e.address) && (
-                    <p className="text-sm text-gray-700">
-                      <strong>Where:</strong>{" "}
-                      {[e.location, e.address].filter(Boolean).join(", ")}
-                    </p>
-                  )}
-                  <br />
-                  {e.description && (
-                    <p className="text-sm text-gray-700">{e.description}</p>
-                  )}
+                {/* Start Date */}
+                <div className="space-y-1">
+                  <label
+                    htmlFor="start_date"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Start Date & Time
+                  </label>
+                  <input
+                    id="start_date"
+                    type="datetime-local"
+                    step="900"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                    value={newEvent.start_date}
+                    onChange={(e) =>
+                      setNewEvent((p) => ({ ...p, start_date: e.target.value }))
+                    }
+                    required
+                  />
+                </div>
+
+                {/* End Date */}
+                <div className="space-y-1">
+                  <label
+                    htmlFor="end_date"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    End Date & Time
+                  </label>
+                  <input
+                    id="end_date"
+                    type="datetime-local"
+                    step="900"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                    value={newEvent.end_date}
+                    onChange={(e) =>
+                      setNewEvent((p) => ({ ...p, end_date: e.target.value }))
+                    }
+                    required
+                  />
+                </div>
+
+                {/* Location */}
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                    value={newEvent.location}
+                    onChange={(e) =>
+                      setNewEvent((p) => ({ ...p, location: e.target.value }))
+                    }
+                  />
+                </div>
+
+                {/* Address */}
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Address
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                    value={newEvent.address}
+                    onChange={(e) =>
+                      setNewEvent((p) => ({ ...p, address: e.target.value }))
+                    }
+                  />
+                </div>
+
+                {/* Image Upload */}
+                <div className="md:col-span-2">
+                  <ImageUpload
+                    bucket="images"
+                    folder="events"
+                    value={newEvent.image}
+                    onUpload={(url) =>
+                      setNewEvent((p) => ({ ...p, image: url }))
+                    }
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Description
+                  </label>
+                  <textarea
+                    rows={4}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                    value={newEvent.description}
+                    onChange={(e) =>
+                      setNewEvent((p) => ({
+                        ...p,
+                        description: e.target.value,
+                      }))
+                    }
+                  />
                 </div>
 
                 <button
-                  onClick={() => handleDeleteEvent(e.id)}
-                  className="text-red-600 hover:underline font-semibold text-sm"
+                  type="submit"
+                  className="md:col-span-2 h-11 rounded-lg text-sm font-medium shadow-sm transition hover:opacity-90"
+                  style={{ backgroundColor: brandColor, color: "white" }}
                 >
-                  Delete
+                  Add Event
                 </button>
-              </li>
-            ))}
-          </ul>
+              </form>
+            )}
+
+            {/* Event List */}
+            <ul className="space-y-3 max-h-96 overflow-y-auto">
+              {events.map((e) => (
+                <li
+                  key={e.id}
+                  className="flex items-start gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4"
+                >
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p
+                      className="font-medium truncate"
+                      style={{ color: brandColor }}
+                    >
+                      {e.title}
+                    </p>
+
+                    <p className="text-sm text-gray-600">
+                      <strong>When:</strong> {formatUTCDate(e.start_date)} –
+                      {formatUTCDate(e.end_date)}
+                    </p>
+
+                    {(e.location || e.address) && (
+                      <p className="text-sm text-gray-700">
+                        <strong>Where:</strong>
+                        {[e.location, e.address].filter(Boolean).join(", ")}
+                      </p>
+                    )}
+
+                    {e.description && (
+                      <p className="text-sm text-gray-700">{e.description}</p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => handleDeleteEvent(e.id)}
+                    className="text-sm font-medium text-red-600 hover:text-red-700 transition"
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+
+              {events.length === 0 && (
+                <div className="py-10 text-center text-sm text-gray-500">
+                  No events found
+                </div>
+              )}
+            </ul>
+          </div>
         </section>
       </div>
     </Layout>

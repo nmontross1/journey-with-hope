@@ -15,6 +15,7 @@ import {
   parseTime,
 } from "@/utils/utils.ts";
 import { toast } from "react-toastify";
+import Logo from "@/components/Logo";
 
 const services = [
   { value: "reiki", label: "Reiki (1 hour)" },
@@ -114,9 +115,7 @@ export default function BookingPage() {
 
   return (
     <Layout>
-      <div className="flex justify-center w-full mb-4">
-        <img src="images/logo.png" alt="Logo" className="w-1/2 max-w-xs" />
-      </div>
+      <Logo size="lg" />
       <div className="w-full block px-4 md:px-0">
         <div className="max-w-4xl mx-auto py-6 pb-16 space-y-6">
           <h1
