@@ -122,7 +122,7 @@ export default function LoginPage() {
 
   return (
     <Layout>
-      <Logo size="lg"/> />
+      <Logo size="lg"/>
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="w-full max-w-md bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
           <div className="p-6" style={{ backgroundColor: brandColor }}>
