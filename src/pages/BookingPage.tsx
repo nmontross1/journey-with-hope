@@ -14,6 +14,7 @@ import {
   formatTime,
   parseTime,
 } from "@/utils/utils.ts";
+import { toast } from "react-toastify";
 
 const services = [
   { value: "reiki", label: "Reiki (1 hour)" },
@@ -55,7 +56,7 @@ export default function BookingPage() {
 
   const handleBooking = async () => {
     if (!selectedSlot || !serviceType) {
-      alert("Please select a time and service");
+      toast.info("Please select a time and service");
       return;
     }
 
@@ -64,7 +65,7 @@ export default function BookingPage() {
     const slotIndex = slots.findIndex((s) => s.id === selectedSlot.id);
 
     if (slotIndex === -1) {
-      alert("Selected slot not found.");
+      toast.info("Selected slot not found.");
       setBookingLoading(false);
       return;
     }
@@ -72,13 +73,13 @@ export default function BookingPage() {
     const consecutiveSlots = slots.slice(slotIndex, slotIndex + slotsNeeded);
 
     if (consecutiveSlots.length < slotsNeeded) {
-      alert("Not enough consecutive slots available for this service.");
+      toast.info("Not enough consecutive slots available for this service.");
       setBookingLoading(false);
       return;
     }
 
     if (!areConsecutive(consecutiveSlots, selectedDate)) {
-      alert("Selected slots are not consecutive.");
+      toast.info("Selected slots are not consecutive.");
       setBookingLoading(false);
       return;
     }
@@ -88,14 +89,14 @@ export default function BookingPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        alert("You must be logged in to book.");
+        toast.info("You must be logged in to book.");
         setBookingLoading(false);
         return;
       }
 
       const slotIds = consecutiveSlots.map((s) => s.id);
       await useAddBooking(slotIds, serviceType, user.id);
-      alert("Booking confirmed!");
+      toast.success("Booking confirmed!");
 
       setBookedSlotIds((prev) => [...prev, ...slotIds]);
       await refetch();

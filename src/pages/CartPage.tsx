@@ -11,10 +11,7 @@ export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
   const [user, setUser] = useState<any>(null);
 
-  const total = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   // --- Fetch current user ---
   useEffect(() => {
@@ -51,7 +48,7 @@ export default function CartPage() {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({ user_id: user.id, cart }),
-      }
+      },
     );
 
     if (!response.ok) {

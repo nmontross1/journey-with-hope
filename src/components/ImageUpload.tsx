@@ -36,9 +36,7 @@ export default function ImageUpload({
 
       if (error) throw error;
 
-      const { data } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath);
+      const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
       onUpload(data.publicUrl);
     } catch (err: any) {
@@ -78,9 +76,7 @@ export default function ImageUpload({
           <span className="text-sm font-medium" style={{ color: brandColor }}>
             Click to upload image
           </span>
-          <span className="text-xs text-gray-500">
-            PNG, JPG up to ~5MB
-          </span>
+          <span className="text-xs text-gray-500">PNG, JPG up to ~5MB</span>
 
           <input
             type="file"
@@ -95,9 +91,7 @@ export default function ImageUpload({
         </label>
       )}
 
-      {uploading && (
-        <span className="text-xs text-gray-500">Uploading…</span>
-      )}
+      {uploading && <span className="text-xs text-gray-500">Uploading…</span>}
     </div>
   );
 }
