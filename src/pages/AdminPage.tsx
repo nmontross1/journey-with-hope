@@ -282,6 +282,28 @@ export default function AdminPage() {
     }
   };
 
+  const markBookingRead = async (bookingId: string) => {
+    await supabase
+      .from("bookings")
+      .update({ marked_read: true })
+      .eq("id", bookingId);
+
+    setBookings((prev) =>
+      prev.map((b) => (b.id === bookingId ? { ...b, marked_read: true } : b)),
+    );
+  };
+
+  const markOrderRead = async (orderId: string) => {
+    await supabase
+      .from("orders")
+      .update({ marked_read: true })
+      .eq("id", orderId);
+
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, marked_read: true } : o)),
+    );
+  };
+
   return (
     <Layout>
       <Logo size="lg" />
@@ -289,21 +311,29 @@ export default function AdminPage() {
       <div className="w-full max-w-full overflow-x-hidden mx-auto py-16 px-4 md:px-6 space-y-10">
         {/* -------------------- UPCOMING APPOINTMENTS -------------------- */}
         <section className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <div className="px-6 py-4 border-b">
+          <div className="px-6 py-4 border-b flex items-center justify-between">
             <h2
               className="text-lg font-semibold tracking-tight"
               style={{ color: brandColor }}
             >
               Upcoming Appointments
             </h2>
+
+            {enrichedBookings.filter((b) => !b.marked_read).length > 0 && (
+              <span className="text-sm font-medium text-white bg-red-600 px-2 py-0.5 rounded-full">
+                {enrichedBookings.filter((b) => !b.marked_read).length}
+              </span>
+            )}
           </div>
 
           <ul className="p-6 space-y-4 max-h-96 overflow-y-auto">
             {enrichedBookings.map((b) => (
               <li
                 key={b.id}
-                className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 hover:bg-gray-50 transition"
-                style={{ borderLeft: `4px solid ${brandColor}` }}
+                onClick={() => markBookingRead(b.id)}
+                className={`flex justify-between items-start gap-4 p-4 rounded-xl border transition
+    ${b.marked_read ? "bg-white border-gray-200" : "bg-yellow-50 border-yellow-300"}
+  `}
               >
                 <div className="flex justify-between items-start gap-4">
                   {/* Details */}
@@ -363,21 +393,29 @@ export default function AdminPage() {
 
         {/* -------------------- RECENT ORDERS -------------------- */}
         <section className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <div className="px-6 py-4 border-b">
+          <div className="px-6 py-4 border-b flex items-center justify-between">
             <h2
               className="text-lg font-semibold tracking-tight"
               style={{ color: brandColor }}
             >
               Recent Orders
             </h2>
+
+            {orders.filter((o) => !o.marked_read).length > 0 && (
+              <span className="text-sm font-medium text-white bg-red-600 px-2 py-0.5 rounded-full">
+                {orders.filter((o) => !o.marked_read).length}
+              </span>
+            )}
           </div>
 
           <ul className="p-6 space-y-4 max-h-96 overflow-y-auto">
             {orders.map((order) => (
               <li
                 key={order.id}
-                className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 hover:bg-gray-50 transition"
-                style={{ borderLeft: `4px solid ${brandColor}` }}
+                onClick={() => markOrderRead(order.id)}
+                className={`rounded-xl border p-4 transition
+    ${order.marked_read ? "bg-white border-gray-200" : "bg-blue-50 border-blue-300"}
+  `}
               >
                 {/* Header */}
                 <div className="flex items-center justify-between">

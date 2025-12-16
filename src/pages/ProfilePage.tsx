@@ -47,10 +47,11 @@ export default function ProfilePage() {
   const isAdmin = profile?.role === "admin";
   const userId = user?.id ?? "";
 
-  const { orders, loading: loadingOrders, error: orderError } = useOrder(
-    userId,
-    false
-  );
+  const {
+    orders,
+    loading: loadingOrders,
+    error: orderError,
+  } = useOrder(userId, false);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -87,12 +88,10 @@ export default function ProfilePage() {
   const nowNY = new Date();
   const enrichedBookings = bookings
     .map((booking) => {
-      const slots = bookingSlots.filter(
-        (bs) => bs.booking_id === booking.id
-      );
+      const slots = bookingSlots.filter((bs) => bs.booking_id === booking.id);
       if (!slots.length) return null;
       const firstSlot = availability.find(
-        (a) => a.id === slots[0].availability_id
+        (a) => a.id === slots[0].availability_id,
       );
       if (!firstSlot) return null;
       const slotDate = new Date(firstSlot.available_from);
@@ -141,7 +140,9 @@ export default function ProfilePage() {
           </div>
 
           <div className="p-6 space-y-4">
-            {loadingOrders && <p className="text-gray-600">Loading orders...</p>}
+            {loadingOrders && (
+              <p className="text-gray-600">Loading orders...</p>
+            )}
             {orderError && <p className="text-red-500">{orderError}</p>}
             {!loadingOrders && orders.length === 0 && (
               <p className="text-gray-500">No orders found.</p>
@@ -162,7 +163,8 @@ export default function ProfilePage() {
                       : "N/A"}
                   </p>
                   <p>
-                    <strong>Order ID:</strong> {order.stripe_session_id || "N/A"}
+                    <strong>Order ID:</strong>{" "}
+                    {order.stripe_session_id || "N/A"}
                   </p>
                   <p>
                     <strong>Status:</strong> {order.status || "N/A"}
@@ -197,7 +199,9 @@ export default function ProfilePage() {
 
           <div className="p-6 space-y-4">
             {enrichedBookings.length === 0 && (
-              <p className="text-gray-500 text-center">No upcoming appointments.</p>
+              <p className="text-gray-500 text-center">
+                No upcoming appointments.
+              </p>
             )}
 
             <div className="flex flex-col md:flex-row flex-wrap gap-4 w-full max-w-full overflow-x-hidden">

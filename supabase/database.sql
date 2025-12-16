@@ -53,6 +53,7 @@ create table public.bookings (
   user_id uuid null,
   service_type text null,
   booked_at timestamp with time zone null default now(),
+  marked_read boolean not null default false,
   constraint bookings_pkey primary key (id),
   constraint bookings_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE,
   constraint bookings_service_type_check check (
@@ -94,6 +95,7 @@ create table public.orders (
   created_at timestamp with time zone null default now(),
   customer_name text null,
   customer_phone text null,
+  marked_read boolean not null default false,
   constraint orders_pkey primary key (id),
   constraint orders_user_id_fkey foreign KEY (user_id) references auth.users (id)
 ) TABLESPACE pg_default;
