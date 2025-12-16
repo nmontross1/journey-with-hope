@@ -64,7 +64,7 @@ export default function EventsPage() {
                   </h2>
 
                   <p className="text-gray-600 mb-2">
-                    <strong>When: </strong> {formatUTCDate(event.start_date)} –
+                    <strong>When: </strong> {formatUTCDate(event.start_date)} –{" "}
                     {formatUTCDate(event.end_date)}
                   </p>
 
