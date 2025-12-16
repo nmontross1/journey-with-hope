@@ -331,55 +331,49 @@ export default function AdminPage() {
               <li
                 key={b.id}
                 onClick={() => markBookingRead(b.id)}
-                className={`flex justify-between items-start gap-4 p-4 rounded-xl border transition
-    ${b.marked_read ? "bg-white border-gray-200" : "bg-yellow-50 border-yellow-300"}
-  `}
+                className={`flex items-center gap-4 p-4 rounded-xl border transition
+          ${b.marked_read ? "bg-white border-gray-200" : "bg-yellow-50 border-yellow-300"}
+        `}
               >
-                <div className="flex justify-between items-start gap-4">
-                  {/* Details */}
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div
-                      className="font-semibold text-base truncate"
-                      style={{ color: brandColor }}
-                    >
-                      {b.profile?.name || "N/A"}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-700">
-                      <div>
-                        <span className="font-medium">Time: </span> {b.time}
-                      </div>
-
-                      <div>
-                        <span className="font-medium">Service: </span>
-                        <span className="capitalize">{b.service_type}</span>
-                      </div>
-
-                      <div>
-                        <span className="font-medium">Birth Month: </span>
-                        {b.profile?.birth_month || "N/A"}
-                      </div>
-
-                      <div>
-                        <span className="font-medium">Contact: </span>
-                        {b.profile?.contact_method || "N/A"}
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <span className="font-medium">Phone: </span>
-                        {b.profile?.phone || "N/A"}
-                      </div>
-                    </div>
+                {/* Details */}
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div
+                    className="font-semibold text-base truncate"
+                    style={{ color: brandColor }}
+                  >
+                    {b.profile?.name || "N/A"}
                   </div>
 
-                  {/* Action */}
-                  <button
-                    onClick={() => cancelBooking(b)}
-                    className="text-sm font-medium text-red-600 hover:text-red-700 transition whitespace-nowrap"
-                  >
-                    Cancel
-                  </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-700">
+                    <div>
+                      <span className="font-medium">Time: </span> {b.time}
+                    </div>
+                    <div>
+                      <span className="font-medium">Service: </span>
+                      <span className="capitalize">{b.service_type}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Birth Month: </span>
+                      {b.profile?.birth_month || "N/A"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Contact: </span>
+                      {b.profile?.contact_method || "N/A"}
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="font-medium">Phone: </span>
+                      {b.profile?.phone || "N/A"}
+                    </div>
+                  </div>
                 </div>
+
+                {/* Cancel button */}
+                <button
+                  onClick={() => cancelBooking(b)}
+                  className="ml-4 text-sm font-medium text-red-600 hover:text-red-700 transition whitespace-nowrap"
+                >
+                  Cancel
+                </button>
               </li>
             ))}
 
