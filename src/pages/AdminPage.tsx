@@ -317,26 +317,26 @@ export default function AdminPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-700">
                       <div>
-                        <span className="font-medium">Time:</span> {b.time}
+                        <span className="font-medium">Time: </span> {b.time}
                       </div>
 
                       <div>
-                        <span className="font-medium">Service:</span>
+                        <span className="font-medium">Service: </span>
                         <span className="capitalize">{b.service_type}</span>
                       </div>
 
                       <div>
-                        <span className="font-medium">Birth Month:</span>
+                        <span className="font-medium">Birth Month: </span>
                         {b.profile?.birth_month || "N/A"}
                       </div>
 
                       <div>
-                        <span className="font-medium">Contact:</span>
+                        <span className="font-medium">Contact: </span>
                         {b.profile?.contact_method || "N/A"}
                       </div>
 
                       <div className="sm:col-span-2">
-                        <span className="font-medium">Phone:</span>
+                        <span className="font-medium">Phone: </span>
                         {b.profile?.phone || "N/A"}
                       </div>
                     </div>
