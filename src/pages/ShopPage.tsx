@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { Listbox } from "@headlessui/react";
 import Logo from "@/components/Logo";
 import type { Product } from "@/types/Product";
+import { toast } from "react-toastify";
 
 const brandColor = "#f5f1e6";
 
@@ -115,7 +116,7 @@ export default function ShopPage() {
       quantity: 1,
       image: product.image,
     });
-    alert(`${product.name} added to cart!`);
+    toast.success(`${product.name} added to cart!`);
   };
 
   return (

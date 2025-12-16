@@ -104,7 +104,7 @@ export default function BookingPage() {
       setServiceType("");
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Booking failed. Try again.");
+      toast.error(err.message || "Booking failed. Try again.");
     } finally {
       setBookingLoading(false);
     }

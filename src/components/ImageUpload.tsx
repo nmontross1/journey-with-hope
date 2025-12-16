@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/libs/supabaseClient";
 import { FiUpload, FiTrash2 } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 type Props = {
   bucket: string;
@@ -40,7 +41,7 @@ export default function ImageUpload({
 
       onUpload(data.publicUrl);
     } catch (err: any) {
-      alert(err.message || "Upload failed");
+      toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
     }

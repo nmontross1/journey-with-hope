@@ -14,6 +14,7 @@ import Logo from "@/components/Logo";
 import ImageUpload from "@/components/ImageUpload";
 import type { Product } from "@/types/Product.ts";
 import type { Event } from "@/types/Event.ts";
+import { toast } from "react-toastify";
 
 const nowNY = getNowInNY();
 const brandColor = "#d6c47f";
@@ -137,7 +138,7 @@ export default function AdminPage() {
       setBookings((bs) => bs.filter((b) => b.id !== booking.id));
       setBookingSlots((bs) => bs.filter((s) => s.booking_id !== booking.id));
     } catch (err: any) {
-      alert(err.message || "Failed to cancel booking.");
+      toast.error(err.message || "Failed to cancel booking.");
     }
   };
 
@@ -155,18 +156,18 @@ export default function AdminPage() {
   const handleAddAvailabilityRange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!availStartDateTime || !availEndDateTime) {
-      alert("Please specify both start and end date/time");
+      toast.info("Please specify both start and end date/time");
       return;
     }
 
     const startDT = new Date(availStartDateTime);
     if (startDT <= nowNY) {
-      alert("Start time must be in the future (EST timezone)");
+      toast.info("Start time must be in the future (EST timezone)");
       return;
     }
 
     if (new Date(availEndDateTime) <= startDT) {
-      alert("End must be after start");
+      toast.info("End must be after start");
       return;
     }
 
@@ -182,7 +183,7 @@ export default function AdminPage() {
         setAvailEndDateTime("");
       }
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     }
   };
 
@@ -218,7 +219,7 @@ export default function AdminPage() {
         image: "",
       });
     } catch (err: any) {
-      alert("Add product failed: " + err.message);
+      toast.error("Add product failed: " + err.message);
     }
   };
 
@@ -232,7 +233,7 @@ export default function AdminPage() {
     e.preventDefault();
 
     if (!newEvent.title || !newEvent.start_date) {
-      alert("Event title and start date are required");
+      toast.info("Event title and start date are required");
       return;
     }
 
@@ -266,7 +267,7 @@ export default function AdminPage() {
         image: "",
       });
     } catch (err: any) {
-      alert("Add event failed: " + (err.message || err));
+      toast.error("Add event failed: " + (err.message || err));
     }
   };
 
@@ -277,7 +278,7 @@ export default function AdminPage() {
       await useDeleteEvent(id); // pass string directly
       setEvents((prev) => prev.filter((e) => e.id !== id));
     } catch (err: any) {
-      alert(err.message || "Failed to delete event.");
+      toast.error(err.message || "Failed to delete event.");
     }
   };
 
