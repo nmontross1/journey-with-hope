@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       cancel_url: `${FRONTEND_URL}/cart`,
       metadata: {
         user_id,
-        product_ids: cart.map((item: any) => item.product_id).join(","),
+        product_id: cart.map((item: any) => item.product_id).join(","),
       },
       shipping_address_collection: {
         allowed_countries: STRIPE_ALLOWED_COUNTRIES,
