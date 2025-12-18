@@ -6,7 +6,7 @@ export async function useAddAvailability(
 ) {
   const available_from = new Date(start);
   const available_to = new Date(start);
-  available_to.setHours(available_from.getHours() + 30);
+  available_to.setHours(available_from.getHours() + 1); // adjust as needed
 
   const { data, error } = await supabase
     .from("availability")
@@ -17,8 +17,9 @@ export async function useAddAvailability(
         available_to,
       },
     ])
-    .select("*"); // Return the inserted row(s)
+    .select("*"); // <- returns inserted rows
 
   if (error) throw error;
-  return data;
+
+  return data || []; // <- ensure array
 }

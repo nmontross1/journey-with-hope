@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/libs/supabaseClient";
+import { toZonedTime, format } from "date-fns-tz";
 
 export function useAvailability() {
   const [availability, setAvailability] = useState<Record<string, any[]>>({});
@@ -8,40 +9,34 @@ export function useAvailability() {
   const fetchAvailability = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("availability")
-        .select("*")
-        .gt("available_from", new Date().toISOString());
-
+      const { data, error } = await supabase.from("availability").select("*");
       if (error) throw error;
 
       const grouped: Record<string, any[]> = {};
+      const timeZone = "America/New_York";
 
       data?.forEach((slot) => {
-        const d = new Date(slot.available_from);
+        // convert UTC → NY
+        const d = toZonedTime(new Date(slot.available_from), timeZone);
 
-        const dateKey = d.toISOString().split("T")[0];
-        const time = d.toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        });
+        const dateKey = format(d, "yyyy-MM-dd", { timeZone });
+        const time = format(d, "HH:mm", { timeZone });
 
         if (!grouped[dateKey]) grouped[dateKey] = [];
 
         grouped[dateKey].push({
           id: slot.id,
-          available_from: slot.available_from,
+          available_from: slot.available_from, // keep original UTC
           time,
-          date: d,
-          service_type: slot.service_type ?? null, // <— SAFE OPTIONAL
+          date: d, // now NY date
+          service_type: slot.service_type ?? null,
         });
       });
 
       // sort times
       Object.values(grouped).forEach((daySlots) => {
         daySlots.sort((a, b) =>
-          a.time.localeCompare(b.time, "en-US", { numeric: true }),
+          a.time.localeCompare(b.time, undefined, { numeric: true }),
         );
       });
 
