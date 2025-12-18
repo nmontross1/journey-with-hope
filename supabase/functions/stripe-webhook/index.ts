@@ -63,20 +63,25 @@ Deno.serve(async (req) => {
       const { data: productsData, error: fetchError } = await supabase
         .from("products")
         .select("id, quantity")
-        .in("id", itemsToUpdate.map((i) => i.product_id));
+        .in(
+          "id",
+          itemsToUpdate.map((i) => i.product_id),
+        );
 
       if (fetchError) {
         console.error("Failed to fetch products:", fetchError);
       } else {
         // Prepare batch updates
-        const updates = itemsToUpdate.map((item) => {
-          const product = productsData?.find((p) => p.id === item.product_id);
-          if (!product) return null;
-          return {
-            id: product.id,
-            quantity: Math.max(product.quantity - item.quantity, 0),
-          };
-        }).filter(Boolean);
+        const updates = itemsToUpdate
+          .map((item) => {
+            const product = productsData?.find((p) => p.id === item.product_id);
+            if (!product) return null;
+            return {
+              id: product.id,
+              quantity: Math.max(product.quantity - item.quantity, 0),
+            };
+          })
+          .filter(Boolean);
 
         // Update all quantities in one batch
         for (const update of updates) {
