@@ -31,12 +31,12 @@ Deno.serve(async (req) => {
       limit: 100,
     });
 
-    // Map items and extract product_id from metadata
-    const items = lineItems.data.map((item) => ({
+    // Cast line item as any to access metadata
+    const items = lineItems.data.map((item: any) => ({
       name: item.description ?? null,
       unit_amount: item.amount_subtotal ?? 0,
       quantity: item.quantity ?? 0,
-      product_id: Number(item.price?.metadata?.product_id),
+      product_id: Number(item.metadata?.product_id), // ✅ safe
     }));
 
     // Insert the order
@@ -55,11 +55,10 @@ Deno.serve(async (req) => {
       return new Response("Insert failed", { status: 500 });
     }
 
-    // Filter items with a valid product_id
+    // Update product quantities
     const itemsToUpdate = items.filter((i) => i.product_id && i.quantity > 0);
 
     if (itemsToUpdate.length > 0) {
-      // Fetch current quantities in one query
       const { data: productsData, error: fetchError } = await supabase
         .from("products")
         .select("id, quantity")
@@ -71,7 +70,6 @@ Deno.serve(async (req) => {
       if (fetchError) {
         console.error("Failed to fetch products:", fetchError);
       } else {
-        // Prepare batch updates
         const updates = itemsToUpdate
           .map((item) => {
             const product = productsData?.find((p) => p.id === item.product_id);
@@ -83,7 +81,7 @@ Deno.serve(async (req) => {
           })
           .filter(Boolean);
 
-        // Update all quantities in one batch
+        // Apply updates
         for (const update of updates) {
           await supabase
             .from("products")

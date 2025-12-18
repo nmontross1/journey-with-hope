@@ -21,7 +21,6 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    // Respond to preflight
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
@@ -35,10 +34,7 @@ Deno.serve(async (req) => {
     if (!user_id || !cart) {
       return new Response(
         JSON.stringify({ error: "Missing user_id or cart" }),
-        {
-          status: 400,
-          headers: corsHeaders,
-        },
+        { status: 400, headers: corsHeaders },
       );
     }
 
@@ -48,34 +44,30 @@ Deno.serve(async (req) => {
     if (userError || !userData) {
       return new Response(
         JSON.stringify({ msg: "Invalid user", error: userError }),
-        {
-          status: 404,
-          headers: corsHeaders,
-        },
+        { status: 404, headers: corsHeaders },
       );
     }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      line_items: cart.map((item: any) => ({
-        price_data: {
-          currency: "usd",
-          product_data: { name: item.name },
-          unit_amount: Math.round(item.price * 100),
-        },
-        quantity: item.quantity,
-      })),
+      line_items: cart
+        .filter((item: any) => item.product_id != null)
+        .map((item: any) => ({
+          price_data: {
+            currency: "usd",
+            product_data: { name: item.name },
+            unit_amount: Math.round(item.price * 100),
+          },
+          quantity: item.quantity,
+          metadata: {
+            product_id: item.product_id.toString(),
+          },
+        })),
       mode: "payment",
       client_reference_id: user_id,
-      phone_number_collection: {
-        enabled: true,
-      },
+      phone_number_collection: { enabled: true },
       success_url: `${FRONTEND_URL}/profile`,
       cancel_url: `${FRONTEND_URL}/cart`,
-      metadata: {
-        user_id,
-        product_id: cart.map((item: any) => item.product_id).join(","),
-      },
       shipping_address_collection: {
         allowed_countries: STRIPE_ALLOWED_COUNTRIES,
       },
