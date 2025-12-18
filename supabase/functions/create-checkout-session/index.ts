@@ -48,6 +48,15 @@ Deno.serve(async (req) => {
       );
     }
 
+    const filteredCart = cart.filter((item: any) => item.product_id != null);
+
+    if (filteredCart.length === 0) {
+      return new Response(JSON.stringify({ error: "No valid items in cart" }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: cart
