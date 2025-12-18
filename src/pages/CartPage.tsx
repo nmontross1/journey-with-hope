@@ -10,6 +10,7 @@ const brandColor = "#d6c47f";
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
   const [user, setUser] = useState<any>(null);
+  const [loadingCheckout, setLoadingCheckout] = useState(false);
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -20,7 +21,6 @@ export default function CartPage() {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
-      console.log("[CartPage] Current user:", user);
     };
     fetchUser();
   }, []);
@@ -39,36 +39,49 @@ export default function CartPage() {
       return;
     }
 
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+    setLoadingCheckout(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ user_id: user.id, cart }),
         },
-        body: JSON.stringify({ user_id: user.id, cart }),
-      },
-    );
+      );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("[CartPage] Checkout error:", errorData);
-      return;
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("[CartPage] Checkout error:", errorData);
+        toast.error("Failed to create checkout session.");
+        setLoadingCheckout(false);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error("Checkout URL not returned by server.");
+        setLoadingCheckout(false);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred during checkout.");
+      setLoadingCheckout(false);
     }
-
-    const data = await response.json();
-    if (data.url) window.location.href = data.url;
   };
 
   return (
     <Layout>
       <Logo size="lg" />
 
-      {/* Page container */}
       <div className="flex justify-center py-12 px-4">
         <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          {/* Header */}
           <div
             className="p-6 text-center"
             style={{ backgroundColor: brandColor }}
@@ -83,7 +96,6 @@ export default function CartPage() {
               </div>
             ) : (
               <>
-                {/* Cart items */}
                 <ul className="space-y-4">
                   {cart.map((item) => (
                     <li
@@ -106,9 +118,7 @@ export default function CartPage() {
                         </p>
                       </div>
 
-                      {/* Quantity + Remove */}
                       <div className="flex flex-col items-center gap-2">
-                        {/* Quantity stepper */}
                         <div className="flex items-center rounded-lg border border-gray-300 overflow-hidden">
                           <button
                             type="button"
@@ -148,19 +158,20 @@ export default function CartPage() {
                   ))}
                 </ul>
 
-                {/* Total */}
                 <div className="flex justify-between items-center pt-4 text-lg font-semibold text-gray-800 border-t">
                   <span>Total</span>
                   <span>${total.toFixed(2)}</span>
                 </div>
 
-                {/* Actions */}
                 <button
                   onClick={handleCheckout}
+                  disabled={loadingCheckout}
                   className="w-full py-3 rounded-xl font-medium text-white shadow-md transition hover:opacity-90"
                   style={{ backgroundColor: brandColor }}
                 >
-                  Checkout with Stripe
+                  {loadingCheckout
+                    ? "Redirecting to Stripe…"
+                    : "Checkout with Stripe"}
                 </button>
 
                 <button
