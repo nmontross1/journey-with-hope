@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       name: item.description ?? null,
       unit_amount: item.amount_subtotal ?? 0,
       quantity: item.quantity ?? 0,
-      product_id: item.price?.product ? String(item.price.product) : null, // use Stripe product ID
+      product_id: Number(item.price?.metadata?.product_id),
     }));
 
     // Insert the order
