@@ -31,13 +31,16 @@ Deno.serve(async (req) => {
       limit: 100,
     });
 
+    // Map items and extract product_id from metadata
     const items = lineItems.data.map((item) => ({
       name: item.description ?? null,
       unit_amount: item.amount_subtotal ?? 0,
       quantity: item.quantity ?? 0,
+      product_id: item.price?.product ? String(item.price.product) : null, // use Stripe product ID
     }));
 
-    const { error } = await supabase.from("orders").insert({
+    // Insert the order
+    const { error: insertError } = await supabase.from("orders").insert({
       user_id: session.client_reference_id ?? null,
       status: "paid",
       amount: (session.amount_total ?? 0) / 100,
@@ -48,8 +51,41 @@ Deno.serve(async (req) => {
       customer_phone: session.customer_details?.phone ?? null,
     });
 
-    if (error) {
+    if (insertError) {
       return new Response("Insert failed", { status: 500 });
+    }
+
+    // Filter items with a valid product_id
+    const itemsToUpdate = items.filter((i) => i.product_id && i.quantity > 0);
+
+    if (itemsToUpdate.length > 0) {
+      // Fetch current quantities in one query
+      const { data: productsData, error: fetchError } = await supabase
+        .from("products")
+        .select("id, quantity")
+        .in("id", itemsToUpdate.map((i) => i.product_id));
+
+      if (fetchError) {
+        console.error("Failed to fetch products:", fetchError);
+      } else {
+        // Prepare batch updates
+        const updates = itemsToUpdate.map((item) => {
+          const product = productsData?.find((p) => p.id === item.product_id);
+          if (!product) return null;
+          return {
+            id: product.id,
+            quantity: Math.max(product.quantity - item.quantity, 0),
+          };
+        }).filter(Boolean);
+
+        // Update all quantities in one batch
+        for (const update of updates) {
+          await supabase
+            .from("products")
+            .update({ quantity: update!.quantity })
+            .eq("id", update!.id);
+        }
+      }
     }
   }
 
