@@ -13,6 +13,7 @@ import {
   areConsecutive,
   formatTime,
   parseTime,
+  getNowInNY,
 } from "@/utils/utils.ts";
 import { toast } from "react-toastify";
 import Logo from "@/components/Logo";
@@ -44,9 +45,29 @@ export default function BookingPage() {
   }, []);
 
   const selectedDate = formatDate(date);
-  const slots = (availability[selectedDate] || []).filter(
-    (slot) => !bookedSlotIds.includes(slot.id),
-  );
+  const nowNY = getNowInNY();
+  const todayNY = formatDate(nowNY);
+
+  const slots = (availability[selectedDate] || []).filter((slot) => {
+    if (bookedSlotIds.includes(slot.id)) return false;
+    if (selectedDate < todayNY) return false;
+    if (selectedDate === todayNY) {
+      const [h, m] = slot.time.split(":").map(Number);
+
+      const slotNY = new Date(
+        nowNY.getFullYear(),
+        nowNY.getMonth(),
+        nowNY.getDate(),
+        h,
+        m,
+        0,
+        0,
+      );
+
+      return slotNY > nowNY;
+    }
+    return true;
+  });
 
   const handleDateChange = (value: any) => {
     if (value instanceof Date) setDate(value);
