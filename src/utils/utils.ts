@@ -144,10 +144,15 @@ export function getTodayString(): string {
   return formatDate(getNowInNY());
 }
 
-export function formatUTCDate(utcString: string | undefined | null) {
+/**
+ * Format a UTC date string to a readable local format
+ */
+export function formatUTCDate(utcString?: string | null) {
   if (!utcString) return "";
 
-  const date = new Date(utcString); // Date constructor parses UTC correctly
+  const date = new Date(utcString);
+  if (isNaN(date.getTime())) return "";
+
   return date.toLocaleString("en-US", {
     year: "numeric",
     month: "short",
@@ -155,6 +160,6 @@ export function formatUTCDate(utcString: string | undefined | null) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
-    timeZone: "UTC", // or omit to use user's local timezone
+    timeZone: "UTC",
   });
 }
