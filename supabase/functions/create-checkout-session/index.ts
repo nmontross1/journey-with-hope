@@ -2,12 +2,12 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { STRIPE_ALLOWED_COUNTRIES } from "./allCountries.ts";
 
-const DB_URL = Deno.env.get("DB_URL")!;
-const DB_SERVICE_ROLE_KEY = Deno.env.get("DB_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY")!;
 const FRONTEND_URL = Deno.env.get("FRONTEND_URL")!;
 
-const supabase = createClient(DB_URL, DB_SERVICE_ROLE_KEY, {
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 });
 
