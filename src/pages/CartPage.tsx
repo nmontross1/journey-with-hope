@@ -14,7 +14,6 @@ export default function CartPage() {
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // --- Fetch current user ---
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -25,7 +24,6 @@ export default function CartPage() {
     fetchUser();
   }, []);
 
-  // --- Checkout handler ---
   const handleCheckout = async () => {
     if (!user) {
       toast.info("You must have an account to place an order.", {
@@ -100,38 +98,42 @@ export default function CartPage() {
                   {cart.map((item) => (
                     <li
                       key={item.id}
-                      className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white shadow-sm"
+                      className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white shadow-sm"
                     >
-                      <img
-                        src={item.image || "/placeholder.png"}
-                        alt={item.name}
-                        className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
-                      />
+                      {/* Image + Description */}
+                      <div className="flex gap-4 w-full">
+                        <img
+                          src={item.image || "/placeholder.png"}
+                          alt={item.name}
+                          className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                        />
 
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-800">
-                          {item.name}
-                        </p>
-                        <p className="text-sm text-gray-500">{item.type}</p>
-                        <p className="text-sm text-gray-700 mt-1">
-                          ${item.price.toFixed(2)} each
-                        </p>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-800">
+                            {item.name}
+                          </p>
+                          <p className="text-sm text-gray-500">{item.type}</p>
+                          <p className="text-sm text-gray-700 mt-1">
+                            ${item.price.toFixed(2)} each
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="flex items-center rounded-lg border border-gray-300 overflow-hidden">
+                      {/* Quantity Controls */}
+                      <div className="flex flex-col items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                        <div className="flex items-center justify-center rounded-lg border border-gray-300 overflow-hidden w-32 sm:w-auto">
                           <button
                             type="button"
                             onClick={() =>
                               updateQuantity(item.id, item.quantity - 1)
                             }
                             disabled={item.quantity <= 1}
-                            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            className="px-2 py-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition text-sm sm:text-base"
                           >
                             −
                           </button>
 
-                          <span className="w-10 text-center font-medium text-gray-800">
+                          <span className="w-10 text-center font-medium text-gray-800 text-sm sm:text-base">
                             {item.quantity}
                           </span>
 
@@ -140,7 +142,7 @@ export default function CartPage() {
                             onClick={() =>
                               updateQuantity(item.id, item.quantity + 1)
                             }
-                            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 transition"
+                            className="px-2 py-1 bg-gray-100 hover:bg-gray-200 transition text-sm sm:text-base"
                           >
                             +
                           </button>
