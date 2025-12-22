@@ -32,6 +32,7 @@ export default function LocationPage() {
   const [bookedSlotIds, setBookedSlotIds] = useState<string[]>([]);
 
   const todayStr = getTodayString();
+  const now = new Date();
 
   useEffect(() => {
     const loadBookedSlots = async () => {
@@ -42,9 +43,9 @@ export default function LocationPage() {
   }, []);
 
   const mainStoreSlots = (availability[todayStr] || []).filter(
-    (slot) => !bookedSlotIds.includes(slot.id),
+    (slot) =>
+      !bookedSlotIds.includes(slot.id) && new Date(slot.available_from) > now,
   );
-
   const linkClass =
     "inline-block mt-2 text-[#d6c47f] hover:underline font-medium";
 
