@@ -60,7 +60,12 @@ Deno.serve(async (req) => {
       line_items: cart.map((item: any) => ({
         price_data: {
           currency: "usd",
-          product_data: { name: item.name },
+          product_data: {
+            name: item.name,
+            metadata: {
+              product_id: String(item.id),
+            },
+          },
           unit_amount: Math.round(item.price * 100),
         },
         quantity: item.quantity,

@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!);
 const endpointSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
+
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -29,15 +30,17 @@ Deno.serve(async (req) => {
 
     const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
       limit: 100,
+      expand: ["data.price.product"],
     });
 
+    // 🔹 1. Save order
     const items = lineItems.data.map((item) => ({
       name: item.description ?? null,
       unit_amount: item.amount_subtotal ?? 0,
       quantity: item.quantity ?? 0,
     }));
 
-    const { error } = await supabase.from("orders").insert({
+    const { error: orderError } = await supabase.from("orders").insert({
       user_id: session.client_reference_id ?? null,
       status: "paid",
       amount: (session.amount_total ?? 0) / 100,
@@ -48,8 +51,34 @@ Deno.serve(async (req) => {
       customer_phone: session.customer_details?.phone ?? null,
     });
 
-    if (error) {
-      return new Response("Insert failed", { status: 500 });
+    if (orderError) {
+      console.error(orderError);
+      return new Response("Order insert failed", { status: 500 });
+    }
+
+    // 🔹 2. Decrement inventory (TYPE-SAFE)
+    for (const item of lineItems.data) {
+      const product =
+        item.price?.product && typeof item.price.product !== "string"
+          ? item.price.product
+          : null;
+
+      const productId =
+        product && "metadata" in product ? product.metadata?.product_id : null;
+
+      const quantityPurchased = item.quantity ?? 0;
+
+      if (!productId || quantityPurchased === 0) continue;
+
+      const { error } = await supabase.rpc("decrement_product_quantity", {
+        p_product_id: Number(productId),
+        p_amount: quantityPurchased,
+      });
+
+      if (error) {
+        console.error("Inventory decrement failed", error);
+        return new Response("Inventory update failed", { status: 500 });
+      }
     }
   }
 
