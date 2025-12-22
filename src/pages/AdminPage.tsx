@@ -16,10 +16,10 @@ import type { Product } from "@/types/Product.ts";
 import type { Event } from "@/types/Event.ts";
 import { toast } from "react-toastify";
 
-const nowNY = getNowInNY();
 const brandColor = "#d6c47f";
 
 export default function AdminPage() {
+  const nowNY = getNowInNY();
   const [products, setProducts] = useState<Product[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [availability, setAvailability] = useState<any[]>([]);
