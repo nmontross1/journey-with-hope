@@ -30,21 +30,18 @@ function ProductCard({ product, onAdd }: ProductCardProps) {
         className="h-48 w-full object-cover"
       />
       <div className="p-5 flex-1 flex flex-col">
-        <h2
-          className="text-xl font-semibold mb-2"
-          style={{ color: brandColor }}
-        >
+        <h2 className="text-xl font-semibold mb-2" style={{ color: brandColor }}>
           {product.name}
         </h2>
-        <p style={{ color: `${brandColor}cc` }} className="mb-1">
+        <p className="mb-1" style={{ color: `${brandColor}cc` }}>
           {product.type}
         </p>
-        <p style={{ color: `${brandColor}cc` }} className="text-sm mb-2">
+        <p className="text-sm mb-2" style={{ color: `${brandColor}cc` }}>
           In stock: {product.quantity}
         </p>
         <p
-          style={{ color: `${brandColor}cc` }}
           className="flex-1 mb-4 break-words"
+          style={{ color: `${brandColor}cc` }}
         >
           {product.description}
         </p>
@@ -85,10 +82,7 @@ export default function ShopPage() {
   useEffect(() => {
     async function fetchProducts() {
       const { data, error } = await supabase.from("products").select("*");
-      if (error) {
-        console.error("Error fetching products:", error);
-        return;
-      }
+      if (error) return console.error(error);
       if (data) {
         setProducts(data);
         setTypes(Array.from(new Set(data.map((p: any) => p.type))));
@@ -141,7 +135,7 @@ export default function ShopPage() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.2 6m0 0a1 1 0 001 1h12a1 1 0 001-1m-14-6h14"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.2 6a1 1 0 001 1h12a1 1 0 001-1m-14-6h14"
               />
             </svg>
             {totalItemsInCart > 0 && (
@@ -153,21 +147,11 @@ export default function ShopPage() {
         </Link>
       </div>
 
-      {filteredProducts.length === 0 && (
-        <div
-          className="text-center py-12 rounded-xl"
-          style={{ color: brandColor }}
-        >
-          No products match your search.
-        </div>
-      )}
-
       <div className="max-w-7xl mx-auto py-12">
-        {/* First row: sidebar + first 2 products */}
-        <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
-          {/* Sidebar */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+          {/* Filters Card (same styling as before) */}
           <aside
-            className="rounded-xl shadow-lg p-6 flex flex-col overflow-y-auto max-h-[80vh]"
+            className="rounded-xl shadow-lg p-6 flex flex-col"
             style={{
               backgroundColor: `${brandColor}20`,
               border: `2px solid ${brandColor}`,
@@ -181,7 +165,7 @@ export default function ShopPage() {
             </h2>
 
             {/* Search */}
-            <div className="mb-4 flex-shrink-0">
+            <div className="mb-4">
               <label
                 className="block text-sm font-medium mb-1"
                 style={{ color: brandColor }}
@@ -198,7 +182,7 @@ export default function ShopPage() {
             </div>
 
             {/* Type */}
-            <div className="mb-4 flex-shrink-0 relative">
+            <div className="mb-4 relative">
               <label
                 className="block text-sm font-medium mb-1"
                 style={{ color: brandColor }}
@@ -221,7 +205,6 @@ export default function ShopPage() {
                   style={{ borderColor: brandColor }}
                 >
                   <Listbox.Option
-                    key="all"
                     value=""
                     className="cursor-pointer px-3 py-2 hover:bg-gray-100"
                   >
@@ -232,7 +215,9 @@ export default function ShopPage() {
                       key={t}
                       value={t}
                       className={({ active }) =>
-                        `cursor-pointer px-3 py-2 ${active ? "bg-gray-100" : ""}`
+                        `cursor-pointer px-3 py-2 ${
+                          active ? "bg-gray-100" : ""
+                        }`
                       }
                     >
                       {t}
@@ -242,8 +227,8 @@ export default function ShopPage() {
               </Listbox>
             </div>
 
-            {/* Price Filters */}
-            <div className="mb-4 flex gap-2 flex-shrink-0">
+            {/* Price */}
+            <div className="mb-4 flex gap-2">
               <div className="flex-1">
                 <label
                   className="block text-sm font-medium mb-1"
@@ -274,9 +259,8 @@ export default function ShopPage() {
               </div>
             </div>
 
-            {/* Reset */}
             <button
-              className="w-full rounded px-3 py-2 font-semibold flex-shrink-0"
+              className="mt-auto w-full rounded px-3 py-2 font-semibold"
               style={{ backgroundColor: brandColor, color: "black" }}
               onClick={() => {
                 setSearch("");
@@ -289,30 +273,15 @@ export default function ShopPage() {
             </button>
           </aside>
 
-          {/* First 2 products */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            {filteredProducts.slice(0, 2).map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAdd={handleAddToCart}
-              />
-            ))}
-          </div>
+          {/* Products */}
+          {filteredProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAdd={handleAddToCart}
+            />
+          ))}
         </div>
-
-        {/* Remaining products: full width */}
-        {filteredProducts.length > 2 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mt-8">
-            {filteredProducts.slice(2).map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAdd={handleAddToCart}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </Layout>
   );
