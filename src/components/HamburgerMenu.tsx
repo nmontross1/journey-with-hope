@@ -55,7 +55,7 @@ export default function HamburgerMenu() {
   };
 
   const menuTextClass =
-    "text-[#d6c47f] transition font-medium hover:bg-[#384e1d]/10 px-2 py-1 rounded";
+    "text-[#d6c47f] transition font-medium hover:bg-[#384e1d]/10 px-3 py-2 rounded md:text-lg";
 
   // Build menu items conditionally
   const menuItems: { label: string; to: string }[] = [
@@ -109,7 +109,7 @@ export default function HamburgerMenu() {
       )}
 
       {/* DESKTOP SIDEBAR */}
-      <div className="hidden md:flex md:flex-col md:fixed md:top-0 md:left-0 md:w-64 md:h-full md:pt-20 md:px-4 md:space-y-2 md:border-r md:border-gray-200 bg-[#384e1d]/90 z-20">
+      <div className="hidden md:flex md:flex-col md:fixed md:top-0 md:left-0 md:w-64 md:h-full md:pt-20 md:px-4 md:space-y-4 md:border-r md:border-gray-200 bg-[#384e1d]/90 z-20">
         {menuItems.map((item) => (
           <Link
             key={item.to}
