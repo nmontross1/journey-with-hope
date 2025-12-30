@@ -16,9 +16,13 @@ type ProductCardProps = {
 };
 
 function ProductCard({ product, onAdd }: ProductCardProps) {
+  const isSoldOut = product.quantity === 0;
+
   return (
     <div
-      className="rounded-xl shadow-lg overflow-hidden flex flex-col"
+      className={`rounded-xl shadow-lg overflow-hidden flex flex-col ${
+        isSoldOut ? "opacity-60" : ""
+      }`}
       style={{
         backgroundColor: `${brandColor}20`,
         border: `2px solid ${brandColor}`,
@@ -29,36 +33,51 @@ function ProductCard({ product, onAdd }: ProductCardProps) {
         alt={product.name}
         className="h-48 w-full object-cover"
       />
+
       <div className="p-5 flex-1 flex flex-col">
-        <h2 className="text-xl font-semibold mb-2" style={{ color: brandColor }}>
+        <h2
+          className="text-xl font-semibold mb-2"
+          style={{ color: brandColor }}
+        >
           {product.name}
         </h2>
+
         <p className="mb-1" style={{ color: `${brandColor}cc` }}>
           {product.type}
         </p>
-        <p className="text-sm mb-2" style={{ color: `${brandColor}cc` }}>
-          In stock: {product.quantity}
-        </p>
+
+        {isSoldOut ? (
+          <p className="text-sm font-semibold mb-2 text-red-600">Sold Out</p>
+        ) : (
+          <p className="text-sm mb-2" style={{ color: `${brandColor}cc` }}>
+            In stock: {product.quantity}
+          </p>
+        )}
+
         <p
           className="flex-1 mb-4 break-words"
           style={{ color: `${brandColor}cc` }}
         >
           {product.description}
         </p>
+
         <div className="flex items-center justify-between mt-auto">
           <span className="text-lg font-bold" style={{ color: brandColor }}>
             ${Number(product.price).toFixed(2)}
           </span>
-          <button
-            className="px-4 py-2 rounded-lg transition"
-            style={{ backgroundColor: brandColor, color: "black" }}
-            onClick={(e) => {
-              e.preventDefault();
-              onAdd(product);
-            }}
-          >
-            Add to Cart
-          </button>
+
+          {!isSoldOut && (
+            <button
+              className="px-4 py-2 rounded-lg transition"
+              style={{ backgroundColor: brandColor, color: "black" }}
+              onClick={(e) => {
+                e.preventDefault();
+                onAdd(product);
+              }}
+            >
+              Add to Cart
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -85,7 +104,7 @@ export default function ShopPage() {
       if (error) return console.error(error);
       if (data) {
         setProducts(data);
-        setTypes(Array.from(new Set(data.map((p: any) => p.type))));
+        setTypes(Array.from(new Set(data.map((p: Product) => p.type))));
       }
     }
     fetchProducts();
@@ -102,6 +121,11 @@ export default function ShopPage() {
   });
 
   const handleAddToCart = (product: Product) => {
+    if (product.quantity === 0) {
+      toast.error("This item is sold out.");
+      return;
+    }
+
     addToCart({
       id: product.id,
       name: product.name,
@@ -110,6 +134,7 @@ export default function ShopPage() {
       quantity: 1,
       image: product.image,
     });
+
     toast.success(`${product.name} added to cart!`);
   };
 
@@ -149,7 +174,7 @@ export default function ShopPage() {
 
       <div className="max-w-7xl mx-auto py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {/* Filters Card (same styling as before) */}
+          {/* Filters Card */}
           <aside
             className="rounded-xl shadow-lg p-6 flex flex-col"
             style={{
@@ -164,7 +189,6 @@ export default function ShopPage() {
               Filter & Search
             </h2>
 
-            {/* Search */}
             <div className="mb-4">
               <label
                 className="block text-sm font-medium mb-1"
@@ -181,7 +205,6 @@ export default function ShopPage() {
               />
             </div>
 
-            {/* Type */}
             <div className="mb-4 relative">
               <label
                 className="block text-sm font-medium mb-1"
@@ -227,7 +250,6 @@ export default function ShopPage() {
               </Listbox>
             </div>
 
-            {/* Price */}
             <div className="mb-4 flex gap-2">
               <div className="flex-1">
                 <label
@@ -273,7 +295,6 @@ export default function ShopPage() {
             </button>
           </aside>
 
-          {/* Products */}
           {filteredProducts.map((product) => (
             <ProductCard
               key={product.id}

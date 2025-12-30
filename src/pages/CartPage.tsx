@@ -7,10 +7,13 @@ import Logo from "@/components/Logo";
 
 const brandColor = "#d6c47f";
 
+type StockMap = Record<number, number>;
+
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
   const [user, setUser] = useState<any>(null);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
+  const [stockMap, setStockMap] = useState<StockMap>({});
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -21,8 +24,34 @@ export default function CartPage() {
       } = await supabase.auth.getUser();
       setUser(user);
     };
+
+    const fetchStock = async () => {
+      if (cart.length === 0) return;
+
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, quantity")
+        .in(
+          "id",
+          cart.map((item) => item.id),
+        );
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const map: StockMap = {};
+      data.forEach((p) => {
+        map[p.id] = p.quantity;
+      });
+
+      setStockMap(map);
+    };
+
     fetchUser();
-  }, []);
+    fetchStock();
+  }, [cart]);
 
   const handleCheckout = async () => {
     if (!user) {
@@ -32,9 +61,20 @@ export default function CartPage() {
       return;
     }
 
-    if (!cart || cart.length === 0) {
+    if (cart.length === 0) {
       toast.warning("Your cart is empty.");
       return;
+    }
+
+    // ✅ Hard stock validation
+    for (const item of cart) {
+      const available = stockMap[Number(item.id)];
+      if (available === 0 || item.quantity > available) {
+        toast.error(
+          `"${item.name}" does not have enough stock. Please adjust your cart.`,
+        );
+        return;
+      }
     }
 
     setLoadingCheckout(true);
@@ -95,72 +135,81 @@ export default function CartPage() {
             ) : (
               <>
                 <ul className="space-y-4">
-                  {cart.map((item) => (
-                    <li
-                      key={item.id}
-                      className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white shadow-sm"
-                    >
-                      {/* Image + Description */}
-                      <div className="flex gap-4 w-full">
-                        <img
-                          src={item.image || "/placeholder.png"}
-                          alt={item.name}
-                          className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
-                        />
+                  {cart.map((item) => {
+                    const available = stockMap[Number(item.id)] ?? Infinity;
+                    const atMax = item.quantity >= available;
 
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-800">
-                            {item.name}
-                          </p>
-                          <p className="text-sm text-gray-500">{item.type}</p>
-                          <p className="text-sm text-gray-700 mt-1">
-                            ${item.price.toFixed(2)} each
-                          </p>
-                        </div>
-                      </div>
+                    return (
+                      <li
+                        key={item.id}
+                        className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white shadow-sm"
+                      >
+                        {/* Image + Info */}
+                        <div className="flex gap-4 w-full">
+                          <img
+                            src={item.image || "/placeholder.png"}
+                            alt={item.name}
+                            className="w-20 h-20 rounded-lg object-cover"
+                          />
 
-                      {/* Quantity Controls */}
-                      <div className="flex flex-col items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                        <div className="flex items-center justify-center rounded-lg border border-gray-300 overflow-hidden w-32 sm:w-auto">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateQuantity(item.id, item.quantity - 1)
-                            }
-                            disabled={item.quantity <= 1}
-                            className="px-2 py-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition text-sm sm:text-base"
-                          >
-                            −
-                          </button>
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-800">
+                              {item.name}
+                            </p>
+                            <p className="text-sm text-gray-500">{item.type}</p>
+                            <p className="text-sm text-gray-700 mt-1">
+                              ${item.price.toFixed(2)} each
+                            </p>
 
-                          <span className="w-10 text-center font-medium text-gray-800 text-sm sm:text-base">
-                            {item.quantity}
-                          </span>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateQuantity(item.id, item.quantity + 1)
-                            }
-                            className="px-2 py-1 bg-gray-100 hover:bg-gray-200 transition text-sm sm:text-base"
-                          >
-                            +
-                          </button>
+                            {atMax && (
+                              <p className="text-xs text-red-500 mt-1">
+                                Max stock reached
+                              </p>
+                            )}
+                          </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => removeFromCart(item.id)}
-                          className="text-xs text-red-500 hover:text-red-700 transition"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </li>
-                  ))}
+                        {/* Quantity Controls */}
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex items-center border rounded-lg overflow-hidden">
+                            <button
+                              onClick={() =>
+                                updateQuantity(item.id, item.quantity - 1)
+                              }
+                              disabled={item.quantity <= 1}
+                              className="px-2 py-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
+                            >
+                              −
+                            </button>
+
+                            <span className="w-10 text-center">
+                              {item.quantity}
+                            </span>
+
+                            <button
+                              onClick={() =>
+                                updateQuantity(item.id, item.quantity + 1)
+                              }
+                              disabled={atMax}
+                              className="px-2 py-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-xs text-red-500 hover:text-red-700"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
 
-                <div className="flex justify-between items-center pt-4 text-lg font-semibold text-gray-800 border-t">
+                <div className="flex justify-between pt-4 border-t text-lg font-semibold">
                   <span>Total</span>
                   <span>${total.toFixed(2)}</span>
                 </div>
@@ -168,7 +217,7 @@ export default function CartPage() {
                 <button
                   onClick={handleCheckout}
                   disabled={loadingCheckout}
-                  className="w-full py-3 rounded-xl font-medium text-white shadow-md transition hover:opacity-90"
+                  className="w-full py-3 rounded-xl text-white shadow-md hover:opacity-90"
                   style={{ backgroundColor: brandColor }}
                 >
                   {loadingCheckout
@@ -177,9 +226,8 @@ export default function CartPage() {
                 </button>
 
                 <button
-                  type="button"
                   onClick={clearCart}
-                  className="w-full py-3 rounded-xl font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
+                  className="w-full py-3 rounded-xl border border-gray-300 hover:bg-gray-50"
                 >
                   Clear Cart
                 </button>
