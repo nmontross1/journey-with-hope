@@ -1,3 +1,4 @@
+import Footer from "@/components/Footer";
 import HamburgerMenu from "@/components/HamburgerMenu";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="w-full max-w-4xl mx-auto overflow-x-hidden">
           {children}
         </div>
+        <Footer />
       </main>
     </div>
   );
