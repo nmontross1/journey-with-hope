@@ -77,6 +77,7 @@ export default function LoginPage() {
             phone: d.phone,
             over_18: d.over18,
             contact_method: d.contactMethod,
+            email: d.email,
           },
         ]);
         if (profileError) throw profileError;

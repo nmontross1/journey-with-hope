@@ -8,6 +8,7 @@ create table public.profiles (
   contact_method text not null,
   created_at timestamp with time zone null default now(),
   role text null default 'user'::text,
+  email text not null default ''::text,
   constraint profiles_pkey primary key (id),
   constraint profiles_id_fkey foreign KEY (id) references auth.users (id) on delete CASCADE
 ) TABLESPACE pg_default;

@@ -360,7 +360,11 @@ export default function AdminPage() {
                       <span className="font-medium">Contact: </span>
                       {b.profile?.contact_method || "N/A"}
                     </div>
-                    <div className="sm:col-span-2">
+                    <div>
+                      <span className="font-medium">Email: </span>
+                      {b.profile?.email || "N/A"}
+                    </div>
+                    <div>
                       <span className="font-medium">Phone: </span>
                       {b.profile?.phone || "N/A"}
                     </div>
