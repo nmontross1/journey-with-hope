@@ -147,15 +147,16 @@ export default function BookingPage() {
           </h1>
 
           <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6 overflow-hidden">
-            <div className="flex flex-col md:flex-row gap-4 md:gap-8 min-h-[60vh] w-full flex-wrap">
+            <div className="flex flex-col lg:flex-row gap-6 min-h-[60vh] w-full">
               {/* Calendar */}
-              <div className="bg-gray-50 rounded-xl p-4 flex-1 min-w-[280px] flex flex-col items-center overflow-x-auto">
+              <div className="flex-1 min-w-0">
                 <h2
                   className="text-lg font-semibold mb-2 text-center"
                   style={{ color: headingColor }}
                 >
                   Pick a Date
                 </h2>
+                <br />
                 <div className="calendar-wrapper">
                   <Calendar
                     onChange={handleDateChange}
@@ -185,13 +186,14 @@ export default function BookingPage() {
               </div>
 
               {/* Available Times */}
-              <div className="flex-1 min-w-[280px] w-full">
+              <div className="flex-1 w-full min-w-0">
                 <h2
                   className="text-lg font-semibold mb-4 text-center"
                   style={{ color: headingColor }}
                 >
                   Available Times
                 </h2>
+                <br />
                 <div className="w-full">
                   {loading ? (
                     <div className="text-gray-500 text-center py-8">
