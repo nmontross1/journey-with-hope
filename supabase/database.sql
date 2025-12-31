@@ -115,3 +115,84 @@ create table public.events (
   end_date timestamp with time zone null,
   constraint events_pkey primary key (id)
 ) TABLESPACE pg_default;
+
+-- =====================================================
+-- 1) PROFILES (identity protection)
+-- =====================================================
+alter table profiles enable row level security;
+
+create policy "profiles owner only"
+on profiles
+for all
+using (auth.uid() = id)
+with check (auth.uid() = id);
+
+-- =====================================================
+-- 2) ORDERS (money protection)
+-- =====================================================
+alter table orders enable row level security;
+
+create policy "orders owner only"
+on orders
+for all
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- =====================================================
+-- 3) BOOKINGS (core business logic)
+-- =====================================================
+alter table bookings enable row level security;
+
+create policy "bookings owner only"
+on bookings
+for all
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- =====================================================
+-- 4) BOOKING_SLOTS (integrity protection)
+-- =====================================================
+alter table booking_slots enable row level security;
+
+create policy "booking slots via booking owner"
+on booking_slots
+for select
+using (
+  exists (
+    select 1
+    from bookings b
+    where b.id = booking_id
+      and b.user_id = auth.uid()
+  )
+);
+
+-- =====================================================
+-- 5) AVAILABILITY (schedule abuse prevention)
+-- =====================================================
+alter table availability enable row level security;
+
+create policy "availability owner only"
+on availability
+for all
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- =====================================================
+-- PRODUCTS (public read, server-only writes)
+-- =====================================================
+alter table products enable row level security;
+
+create policy "products public read"
+on products
+for select
+using (true);
+
+-- =====================================================
+-- EVENTS (public read, server-only writes)
+-- =====================================================
+alter table events enable row level security;
+
+create policy "events public read"
+on events
+for select
+using (true);
