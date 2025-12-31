@@ -55,10 +55,15 @@ export default function HamburgerMenu() {
   };
 
   const menuTextClass =
-    "text-[#d6c47f] transition font-medium hover:bg-[#384e1d]/10 px-3 py-2 rounded md:text-lg";
+    "text-[#d6c47f] transition font-medium hover:bg-[#384e1d]/10 px-3 py-2 rounded md:text-lg flex items-center space-x-2";
 
-  // Build menu items conditionally
-  const menuItems: { label: string; to: string }[] = [
+  // Menu items
+  const menuItems: {
+    label: string;
+    to: string;
+    icon?: string;
+    external?: boolean;
+  }[] = [
     !user && { label: "Login / Create Account", to: "/login" },
     user &&
       user.profile?.role !== "admin" && { label: "Profile", to: "/profile" },
@@ -66,8 +71,25 @@ export default function HamburgerMenu() {
     { label: "Appointments", to: "/appointments" },
     { label: "Locations", to: "/locations" },
     { label: "Events", to: "/events" },
+    {
+      label: "Facebook",
+      to: "https://www.facebook.com/profile.php?id=100086688615594",
+      icon: "/images/facebook.jpg",
+      external: true,
+    },
+    {
+      label: "Instagram",
+      to: "https://www.instagram.com/journey_w_hope/",
+      icon: "/images/instagram.jpg",
+      external: true,
+    },
     user?.profile?.role === "admin" && { label: "Admin", to: "/admin" },
-  ].filter(Boolean) as { label: string; to: string }[];
+  ].filter(Boolean) as {
+    label: string;
+    to: string;
+    icon?: string;
+    external?: boolean;
+  }[];
 
   return (
     <>
@@ -85,16 +107,34 @@ export default function HamburgerMenu() {
       {menuOpen && (
         <div className="fixed inset-0 z-30 bg-[#384e1d] bg-opacity-95 flex flex-col pt-24 px-4 md:hidden">
           <nav className="flex flex-col space-y-6 text-xl">
-            {menuItems.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setMenuOpen(false)}
-                className={menuTextClass}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {menuItems.map((item) =>
+              item.icon ? (
+                <a
+                  key={item.to}
+                  href={item.to}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={menuTextClass}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <img
+                    src={item.icon}
+                    alt={item.label}
+                    className="w-6 h-6 object-contain"
+                  />
+                  <span>{item.label}</span>
+                </a>
+              ) : (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setMenuOpen(false)}
+                  className={menuTextClass}
+                >
+                  {item.label}
+                </Link>
+              ),
+            )}
 
             {user && (
               <button
@@ -110,15 +150,32 @@ export default function HamburgerMenu() {
 
       {/* DESKTOP SIDEBAR */}
       <div className="hidden md:flex md:flex-col md:fixed md:top-0 md:left-0 md:w-64 md:h-full md:pt-20 md:px-4 md:space-y-4 md:border-r md:border-gray-200 bg-[#384e1d]/90 z-20">
-        {menuItems.map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            className={`${menuTextClass} block w-full text-left`}
-          >
-            {item.label}
-          </Link>
-        ))}
+        {menuItems.map((item) =>
+          item.icon ? (
+            <a
+              key={item.to}
+              href={item.to}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={menuTextClass}
+            >
+              <img
+                src={item.icon}
+                alt={item.label}
+                className="w-6 h-6 object-contain"
+              />
+              <span>{item.label}</span>
+            </a>
+          ) : (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`${menuTextClass} block w-full text-left`}
+            >
+              {item.label}
+            </Link>
+          ),
+        )}
 
         {user && (
           <button
