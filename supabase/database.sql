@@ -116,24 +116,30 @@ create table public.events (
   constraint events_pkey primary key (id)
 ) TABLESPACE pg_default;
 
--- =========================
--- HELPER FUNCTION
--- Check if the logged-in user is an admin
--- =========================
+-- =========================================================
+-- ADMIN HELPER (CRITICAL: PREVENTS RLS RECURSION)
+-- =========================================================
 create or replace function public.is_admin()
 returns boolean
-language sql stable
+language sql
+stable
+security definer
+set search_path = public
 as $$
   select exists (
     select 1
     from public.profiles
-    where id = auth.uid() and role = 'admin'
+    where id = auth.uid()
+      and role = 'admin'
   );
 $$;
 
--- =========================
+revoke all on function public.is_admin() from public;
+grant execute on function public.is_admin() to authenticated;
+
+-- =========================================================
 -- ENABLE RLS ON ALL TABLES
--- =========================
+-- =========================================================
 alter table public.profiles enable row level security;
 alter table public.availability enable row level security;
 alter table public.booking_slots enable row level security;
@@ -142,13 +148,14 @@ alter table public.products enable row level security;
 alter table public.orders enable row level security;
 alter table public.events enable row level security;
 
--- =========================
--- PROFILES TABLE
--- Users can manage their own profile; admins can manage all
--- =========================
+-- =========================================================
+-- PROFILES
+-- Users manage own profile; admins manage all
+-- =========================================================
 drop policy if exists "users or admin can manage profiles" on public.profiles;
 
-create policy "users or admin can manage profiles" on public.profiles
+create policy "users or admin can manage profiles"
+on public.profiles
 for all
 using (
   auth.uid() = id
@@ -159,36 +166,42 @@ with check (
   or public.is_admin()
 );
 
--- =========================
--- AVAILABILITY TABLE
--- Public can read; authenticated users full CRUD
--- =========================
+-- =========================================================
+-- AVAILABILITY
+-- Public read; authenticated full CRUD
+-- =========================================================
 drop policy if exists "public can read availability" on public.availability;
 drop policy if exists "authenticated full access" on public.availability;
 
-create policy "public can read availability" on public.availability
+create policy "public can read availability"
+on public.availability
 for select
 using (true);
 
-create policy "authenticated full access" on public.availability
+create policy "authenticated full access"
+on public.availability
 for all
 using (auth.uid() is not null)
 with check (auth.uid() is not null);
 
--- =========================
--- BOOKING_SLOTS TABLE
--- Users manage their own slots via bookings; admins manage all
--- =========================
+-- =========================================================
+-- BOOKING_SLOTS
+-- Owned via bookings; admins manage all
+-- =========================================================
 drop policy if exists "users or admin can manage booking_slots" on public.booking_slots;
 
-create policy "users or admin can manage booking_slots" on public.booking_slots
+create policy "users or admin can manage booking_slots"
+on public.booking_slots
 for all
 using (
   exists (
     select 1
     from public.bookings b
     where b.id = booking_slots.booking_id
-      and (b.user_id = auth.uid() or public.is_admin())
+      and (
+        b.user_id = auth.uid()
+        or public.is_admin()
+      )
   )
 )
 with check (
@@ -196,17 +209,21 @@ with check (
     select 1
     from public.bookings b
     where b.id = booking_slots.booking_id
-      and (b.user_id = auth.uid() or public.is_admin())
+      and (
+        b.user_id = auth.uid()
+        or public.is_admin()
+      )
   )
 );
 
--- =========================
--- BOOKINGS TABLE
--- Users manage own bookings; admins manage all
--- =========================
+-- =========================================================
+-- BOOKINGS
+-- Users manage own; admins manage all
+-- =========================================================
 drop policy if exists "users or admin can manage bookings" on public.bookings;
 
-create policy "users or admin can manage bookings" on public.bookings
+create policy "users or admin can manage bookings"
+on public.bookings
 for all
 using (
   auth.uid() = user_id
@@ -217,29 +234,32 @@ with check (
   or public.is_admin()
 );
 
--- =========================
--- PRODUCTS TABLE
--- Public read; authenticated users full CRUD
--- =========================
+-- =========================================================
+-- PRODUCTS
+-- Public read; authenticated full CRUD
+-- =========================================================
 drop policy if exists "public can read products" on public.products;
 drop policy if exists "authenticated full access" on public.products;
 
-create policy "public can read products" on public.products
+create policy "public can read products"
+on public.products
 for select
 using (true);
 
-create policy "authenticated full access" on public.products
+create policy "authenticated full access"
+on public.products
 for all
 using (auth.uid() is not null)
 with check (auth.uid() is not null);
 
--- =========================
--- ORDERS TABLE
--- Users manage own orders; admins manage all
--- =========================
+-- =========================================================
+-- ORDERS
+-- Users manage own; admins manage all
+-- =========================================================
 drop policy if exists "users or admin can manage orders" on public.orders;
 
-create policy "users or admin can manage orders" on public.orders
+create policy "users or admin can manage orders"
+on public.orders
 for all
 using (
   auth.uid() = user_id
@@ -250,18 +270,20 @@ with check (
   or public.is_admin()
 );
 
--- =========================
--- EVENTS TABLE
--- Public read; authenticated users full CRUD
--- =========================
+-- =========================================================
+-- EVENTS
+-- Public read; authenticated full CRUD
+-- =========================================================
 drop policy if exists "public can read events" on public.events;
 drop policy if exists "authenticated full access" on public.events;
 
-create policy "public can read events" on public.events
+create policy "public can read events"
+on public.events
 for select
 using (true);
 
-create policy "authenticated full access" on public.events
+create policy "authenticated full access"
+on public.events
 for all
 using (auth.uid() is not null)
 with check (auth.uid() is not null);
