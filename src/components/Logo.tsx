@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 type LogoProps = {
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -11,12 +13,14 @@ export default function Logo({ size = "md", className = "" }: LogoProps) {
   };
 
   return (
-    <div className={`mx-auto ${sizeClasses[size]} ${className}`}>
-      <img
-        src="/images/logo.png"
-        alt="Journey With Hope"
-        className="w-full h-auto"
-      />
-    </div>
+    <Link to="/">
+      <div className={`mx-auto ${sizeClasses[size]} ${className}`}>
+        <img
+          src="/images/logo.png"
+          alt="Journey With Hope"
+          className="w-full h-auto"
+        />
+      </div>
+    </Link>
   );
 }
