@@ -117,7 +117,7 @@ create table public.events (
 ) TABLESPACE pg_default;
 
 -- =========================================================
--- ADMIN HELPER (CRITICAL: PREVENTS RLS RECURSION)
+-- ADMIN HELPER (SECURITY DEFINER, NO RLS RECURSION)
 -- =========================================================
 create or replace function public.is_admin()
 returns boolean
@@ -129,7 +129,7 @@ as $$
   select exists (
     select 1
     from public.profiles
-    where id = auth.uid()
+    where id = (select auth.uid())
       and role = 'admin'
   );
 $$;
@@ -158,11 +158,11 @@ create policy "users or admin can manage profiles"
 on public.profiles
 for all
 using (
-  auth.uid() = id
+  id = (select auth.uid())
   or public.is_admin()
 )
 with check (
-  auth.uid() = id
+  id = (select auth.uid())
   or public.is_admin()
 );
 
@@ -181,12 +181,12 @@ using (true);
 create policy "authenticated full access"
 on public.availability
 for all
-using (auth.uid() is not null)
-with check (auth.uid() is not null);
+using ((select auth.uid()) is not null)
+with check ((select auth.uid()) is not null);
 
 -- =========================================================
 -- BOOKING_SLOTS
--- Owned via bookings; admins manage all
+-- Owned through bookings; admins manage all
 -- =========================================================
 drop policy if exists "users or admin can manage booking_slots" on public.booking_slots;
 
@@ -199,7 +199,7 @@ using (
     from public.bookings b
     where b.id = booking_slots.booking_id
       and (
-        b.user_id = auth.uid()
+        b.user_id = (select auth.uid())
         or public.is_admin()
       )
   )
@@ -210,7 +210,7 @@ with check (
     from public.bookings b
     where b.id = booking_slots.booking_id
       and (
-        b.user_id = auth.uid()
+        b.user_id = (select auth.uid())
         or public.is_admin()
       )
   )
@@ -226,11 +226,11 @@ create policy "users or admin can manage bookings"
 on public.bookings
 for all
 using (
-  auth.uid() = user_id
+  user_id = (select auth.uid())
   or public.is_admin()
 )
 with check (
-  auth.uid() = user_id
+  user_id = (select auth.uid())
   or public.is_admin()
 );
 
@@ -249,8 +249,8 @@ using (true);
 create policy "authenticated full access"
 on public.products
 for all
-using (auth.uid() is not null)
-with check (auth.uid() is not null);
+using ((select auth.uid()) is not null)
+with check ((select auth.uid()) is not null);
 
 -- =========================================================
 -- ORDERS
@@ -262,11 +262,11 @@ create policy "users or admin can manage orders"
 on public.orders
 for all
 using (
-  auth.uid() = user_id
+  user_id = (select auth.uid())
   or public.is_admin()
 )
 with check (
-  auth.uid() = user_id
+  user_id = (select auth.uid())
   or public.is_admin()
 );
 
@@ -285,5 +285,6 @@ using (true);
 create policy "authenticated full access"
 on public.events
 for all
-using (auth.uid() is not null)
-with check (auth.uid() is not null);
+using ((select auth.uid()) is not null)
+with check ((select auth.uid()) is not null);
+
