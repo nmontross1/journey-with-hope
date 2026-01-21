@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
 import Logo from "@/components/Logo";
+import SliderCaptcha from "@/components/SliderCaptcha";
 
 const brandColor = "#d6c47f";
 
@@ -11,9 +12,11 @@ export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaDone, setCaptchaDone] = useState(false);
 
   const handleReset = async () => {
     if (!password) return toast.error("Enter a new password");
+    if (!captchaDone) return toast.error("Please complete the CAPTCHA");
 
     setLoading(true);
     try {
@@ -22,9 +25,11 @@ export default function ResetPasswordPage() {
 
       toast.success("Password reset successfully!");
       navigate("/"); // redirect to login
+      setCaptchaDone(false); // reset captcha after success
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to reset password");
+      setCaptchaDone(false); // reset captcha on failure
     } finally {
       setLoading(false);
     }
@@ -58,11 +63,16 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
+
+              {/* Slider CAPTCHA */}
+              <div className="my-4">
+                <SliderCaptcha onSuccess={() => setCaptchaDone(true)} />
+              </div>
             </div>
 
             <button
               onClick={handleReset}
-              disabled={loading}
+              disabled={loading || !captchaDone}
               className="w-full py-3 px-4 rounded-lg font-medium shadow-md text-white transition-colors"
               style={{ backgroundColor: brandColor }}
             >

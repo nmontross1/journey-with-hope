@@ -17,6 +17,7 @@ import {
 } from "@/utils/utils.ts";
 import { toast } from "react-toastify";
 import Logo from "@/components/Logo";
+import SliderCaptcha from "@/components/SliderCaptcha";
 
 const services = [
   { value: "reiki", label: "Reiki (1 hour)" },
@@ -31,9 +32,10 @@ export default function BookingPage() {
   const [serviceType, setServiceType] = useState<
     "reiki" | "tarot" | "combo" | "consultation" | ""
   >("");
-
+  const [captchaDone, setCaptchaDone] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookedSlotIds, setBookedSlotIds] = useState<string[]>([]);
+
   const { availability, loading, refetch } = useAvailability();
 
   useEffect(() => {
@@ -53,7 +55,6 @@ export default function BookingPage() {
     if (selectedDate < todayNY) return false;
     if (selectedDate === todayNY) {
       const [h, m] = slot.time.split(":").map(Number);
-
       const slotNY = new Date(
         nowNY.getFullYear(),
         nowNY.getMonth(),
@@ -63,7 +64,6 @@ export default function BookingPage() {
         0,
         0,
       );
-
       return slotNY > nowNY;
     }
     return true;
@@ -79,6 +79,11 @@ export default function BookingPage() {
   const handleBooking = async () => {
     if (!selectedSlot || !serviceType) {
       toast.info("Please select a time and service");
+      return;
+    }
+
+    if (!captchaDone) {
+      toast.info("Please complete the captcha");
       return;
     }
 
@@ -124,6 +129,7 @@ export default function BookingPage() {
       await refetch();
       setSelectedSlot(null);
       setServiceType("");
+      setCaptchaDone(false);
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Booking failed. Try again.");
@@ -146,7 +152,7 @@ export default function BookingPage() {
             Appointments
           </h1>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
             <div className="flex flex-col lg:flex-row gap-6 min-h-[60vh] w-full">
               {/* Calendar */}
               <div className="flex-1 min-w-0">
@@ -156,33 +162,30 @@ export default function BookingPage() {
                 >
                   Pick a Date
                 </h2>
-                <br />
-                <div className="calendar-wrapper">
-                  <Calendar
-                    onChange={handleDateChange}
-                    value={date}
-                    className="react-calendar border-0 rounded-lg shadow-inner p-2 text-center"
-                    tileClassName={({ date: calDate }) => {
-                      const dateStr = formatDate(calDate);
-                      const isToday = dateStr === formatDate(new Date());
-                      const hasAvailability = availability[dateStr]?.length > 0;
-                      const isSelected = date && dateStr === formatDate(date);
+                <Calendar
+                  onChange={handleDateChange}
+                  value={date}
+                  className="react-calendar border-0 rounded-lg shadow-inner p-2 text-center w-full"
+                  tileClassName={({ date: calDate }) => {
+                    const dateStr = formatDate(calDate);
+                    const isToday = dateStr === formatDate(new Date());
+                    const hasAvailability = availability[dateStr]?.length > 0;
+                    const isSelected = date && dateStr === formatDate(date);
 
-                      return `
-        ${isSelected ? "bg-[#d6c47f] text-white rounded-full" : "rounded-lg"}
-        ${isToday && !isSelected ? "border-2 border-[#d6c47f]" : ""}
-        ${hasAvailability && !isSelected ? "bg-[#d6c47f]/20 font-semibold" : ""}
-        cursor-pointer flex items-center justify-center
-      `;
-                    }}
-                    nextLabel="→"
-                    prevLabel="←"
-                    next2Label={null}
-                    prev2Label={null}
-                    showNeighboringMonth={false}
-                    showDoubleView={false}
-                  />
-                </div>
+                    return `
+                      ${isSelected ? "bg-[#d6c47f] text-white rounded-full" : "rounded-lg"}
+                      ${isToday && !isSelected ? "border-2 border-[#d6c47f]" : ""}
+                      ${hasAvailability && !isSelected ? "bg-[#d6c47f]/20 font-semibold" : ""}
+                      cursor-pointer flex items-center justify-center
+                    `;
+                  }}
+                  nextLabel="→"
+                  prevLabel="←"
+                  next2Label={null}
+                  prev2Label={null}
+                  showNeighboringMonth={false}
+                  showDoubleView={false}
+                />
               </div>
 
               {/* Available Times */}
@@ -193,7 +196,6 @@ export default function BookingPage() {
                 >
                   Available Times
                 </h2>
-                <br />
                 <div className="w-full">
                   {loading ? (
                     <div className="text-gray-500 text-center py-8">
@@ -228,17 +230,18 @@ export default function BookingPage() {
             {/* Selected Slot & Service */}
             {selectedSlot && (
               <div
-                className="mt-6 rounded-xl p-6 space-y-4 overflow-x-auto"
+                className="mt-6 rounded-xl p-6 space-y-4 w-full flex flex-col items-center overflow-hidden"
                 style={{ backgroundColor: "#d6c47f/10" }}
               >
                 <h3
-                  className="text-lg font-semibold text-center"
+                  className="text-lg font-semibold text-center w-full"
                   style={{ color: headingColor }}
                 >
                   Selected Time: {formatTime(parseTime(selectedSlot.time))}
                 </h3>
 
-                <div className="w-full relative">
+                {/* Service selection */}
+                <div className="w-full max-w-md">
                   <Listbox value={serviceType} onChange={setServiceType}>
                     <Listbox.Button
                       className="w-full border border-gray-300 rounded-lg px-4 py-2 text-base text-left focus:ring-2"
@@ -269,14 +272,22 @@ export default function BookingPage() {
                   </Listbox>
                 </div>
 
+                {/* Slider Captcha */}
+                <div
+                  className="w-full max-w-md mt-4 justify-center"
+                  style={{
+                    transform: "scale(0.84)",
+                    transformOrigin: "top left",
+                  }}
+                >
+                  <SliderCaptcha onSuccess={() => setCaptchaDone(true)} />
+                </div>
+
                 <button
                   onClick={handleBooking}
-                  disabled={!serviceType || bookingLoading}
+                  disabled={!serviceType || bookingLoading || !captchaDone}
                   className="w-full mt-4 px-6 py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    backgroundColor: headingColor,
-                    color: "white",
-                  }}
+                  style={{ backgroundColor: headingColor, color: "white" }}
                 >
                   {bookingLoading ? "Confirming..." : "Confirm Booking"}
                 </button>

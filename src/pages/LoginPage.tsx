@@ -9,6 +9,7 @@ import { Listbox, Transition } from "@headlessui/react";
 import type { LoginForm } from "@/types/LoginForm";
 import type { RegisterForm } from "@/types/RegisterForm";
 import Logo from "@/components/Logo";
+import SliderCaptcha from "@/components/SliderCaptcha";
 
 const brandColor = "#d6c47f";
 
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [forgotPassword, setForgotPassword] = useState(false);
+  const [captchaDone, setCaptchaDone] = useState(false);
   const navigate = useNavigate();
 
   const {
@@ -49,6 +51,12 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm | RegisterForm) => {
     setLoading(true);
     try {
+      if ((isRegistering || forgotPassword) && !captchaDone) {
+        toast.error("Please complete the CAPTCHA before continuing.");
+        setLoading(false);
+        return;
+      }
+
       if (forgotPassword) {
         const email = (data as LoginForm).email;
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -57,6 +65,7 @@ export default function LoginPage() {
         if (error) throw error;
         toast.success("Password reset email sent!");
         setForgotPassword(false);
+        setCaptchaDone(false);
       } else if (isRegistering) {
         const d = data as RegisterForm;
         if (d.password !== d.confirmPassword) {
@@ -84,6 +93,7 @@ export default function LoginPage() {
 
         toast.success("Registration successful!");
         navigate("/");
+        setCaptchaDone(false);
       } else {
         const d = data as LoginForm;
         const { data: signInData, error: authError } =
@@ -150,6 +160,7 @@ export default function LoginPage() {
                 />
               </div>
 
+              {/* Show password and registration fields only if not forgot password */}
               {!forgotPassword && (
                 <>
                   {/* Password */}
@@ -330,13 +341,28 @@ export default function LoginPage() {
                   )}
                 </>
               )}
+
+              {/* Slider CAPTCHA for Registration & Forgot Password */}
+              {(isRegistering || forgotPassword) && (
+                <div
+                  className="my-4"
+                  style={{
+                    transform: "scale(0.9)",
+                    transformOrigin: "top left",
+                  }}
+                >
+                  <SliderCaptcha onSuccess={() => setCaptchaDone(true)} />
+                </div>
+              )}
             </div>
 
             {/* Buttons */}
             <div className="flex gap-4 flex-col sm:flex-row">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={
+                  loading || ((isRegistering || forgotPassword) && !captchaDone)
+                }
                 className="cursor-pointer flex-1 py-3 px-4 rounded-lg font-medium shadow-md transition-colors"
                 style={{ backgroundColor: brandColor, color: "white" }}
               >
@@ -352,7 +378,10 @@ export default function LoginPage() {
               {!forgotPassword && (
                 <button
                   type="button"
-                  onClick={() => setIsRegistering(!isRegistering)}
+                  onClick={() => {
+                    setIsRegistering(!isRegistering);
+                    setCaptchaDone(false); // reset captcha when toggling
+                  }}
                   className="cursor-pointer flex-1 py-3 px-4 rounded-lg font-medium border shadow-sm transition-colors"
                   style={{ borderColor: brandColor, color: brandColor }}
                 >
@@ -366,7 +395,10 @@ export default function LoginPage() {
               <div className="text-center mt-4">
                 <button
                   type="button"
-                  onClick={() => setForgotPassword(true)}
+                  onClick={() => {
+                    setForgotPassword(true);
+                    setCaptchaDone(false); // reset captcha when opening forgot password
+                  }}
                   className="text-sm text-yellow-600 underline"
                 >
                   Forgot Password?

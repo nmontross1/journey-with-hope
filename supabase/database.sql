@@ -190,6 +190,17 @@ with check ((select auth.uid()) is not null);
 -- =========================================================
 drop policy if exists "users or admin can manage booking_slots" on public.booking_slots;
 
+-- PUBLIC CAN READ BOOKING_SLOTS
+drop policy if exists "public can read booking_slots" on public.booking_slots;
+
+create policy "public can read booking_slots"
+on public.booking_slots
+for select
+using (true);
+
+-- USERS OR ADMIN CAN MODIFY
+drop policy if exists "users or admin can manage booking_slots" on public.booking_slots;
+
 create policy "users or admin can manage booking_slots"
 on public.booking_slots
 for all

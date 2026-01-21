@@ -1,0 +1,58 @@
+.slider-captcha {
+  position: relative;
+  background: #e0e0e0;
+  border-radius: 25px;
+  user-select: none;
+  overflow: hidden;
+}
+
+.slider-track {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  line-height: 50px;
+  text-align: center;
+  font-weight: bold;
+  color: #555;
+  transition: background 0.3s;
+}
+
+.slider-track.verified {
+  background: #4caf50;
+  color: white;
+}
+
+.slider-handle {
+  position: absolute;
+  top: 0;
+  background: #fff;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  cursor: grab;
+  transition:
+    background 0.3s,
+    border 0.3s;
+}
+
+.slider-handle:active {
+  cursor: grabbing;
+  background: #f0f0f0;
+}
+
+/* Booking page only */
+.booking-page .slider-captcha {
+  height: 40px; /* smaller than default */
+  border-radius: 20px;
+}
+
+.booking-page .slider-track {
+  line-height: 40px; /* match captcha height */
+  font-size: 0.85rem; /* smaller text */
+}
+
+.booking-page .slider-handle {
+  width: 36px; /* smaller handle */
+  height: 36px; /* smaller handle */
+  top: 2px; /* adjust vertical alignment */
+  border-width: 1.5px;
+}
