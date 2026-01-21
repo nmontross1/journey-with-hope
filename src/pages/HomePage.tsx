@@ -5,19 +5,19 @@ import Logo from "@/components/Logo";
 
 const slides = [
   {
-    src: "images/profile.jpg",
+    src: "/profile.jpg",
     alt: "Tarot",
     link: "/appointments",
     label: "Tarot",
   },
   {
-    src: "images/reiki.jpg",
+    src: "/reiki.jpg",
     alt: "Reiki",
     link: "/appointments",
     label: "Reiki",
   },
   {
-    src: "images/crystals.jpg",
+    src: "/crystals.jpg",
     alt: "Crystals",
     link: "/shop",
     label: "Crystals",

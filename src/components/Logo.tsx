@@ -16,7 +16,7 @@ export default function Logo({ size = "md", className = "" }: LogoProps) {
     <Link to="/">
       <div className={`mx-auto ${sizeClasses[size]} ${className}`}>
         <img
-          src="/images/logo.png"
+          src="/logo.png"
           alt="Journey With Hope"
           className="w-full h-auto"
         />

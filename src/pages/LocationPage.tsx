@@ -15,7 +15,7 @@ const locations = [
     name: "Main Store",
     address: "201 Sherman Ave, Vandergrift, PA 15690",
     phone: "(724) 594-3349",
-    image: "images/home-store.jpg",
+    image: "/home-store.jpg",
   },
   {
     id: 2,
@@ -23,7 +23,7 @@ const locations = [
     address: "490 E Waterfront Dr, Homestead, PA 15120",
     hours: "Everyday: 10am - 8pm",
     phone: "(412) 326-1100",
-    image: "images/painted-tree-store.jpg",
+    image: "/painted-tree-store.jpg",
   },
 ];
 

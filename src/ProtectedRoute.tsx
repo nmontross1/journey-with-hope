@@ -34,7 +34,7 @@ export function ProtectedRoute({ adminOnly = false }: ProtectedRouteProps) {
           <p style={{ color: "#f5f1e6" }}>
             You do not have permission to view this page.
           </p>
-          <img src="images/galaxy.jpg" alt="" />
+          <img src="/galaxy.jpg" alt="" />
         </div>
       </Layout>
     );

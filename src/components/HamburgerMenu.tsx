@@ -74,13 +74,13 @@ export default function HamburgerMenu() {
     {
       label: "Facebook",
       to: "https://www.facebook.com/profile.php?id=100086688615594",
-      icon: "/images/facebook.jpg",
+      icon: "/facebook.jpg",
       external: true,
     },
     {
       label: "Instagram",
       to: "https://www.instagram.com/journey_w_hope/",
-      icon: "/images/instagram.jpg",
+      icon: "/instagram.jpg",
       external: true,
     },
     user?.profile?.role === "admin" && { label: "Admin", to: "/admin" },
