@@ -47,11 +47,7 @@ export default function ProfilePage() {
   const isAdmin = profile?.role === "admin";
   const userId = user?.id ?? "";
 
-  const {
-    orders,
-    loading: loadingOrders,
-    error: orderError,
-  } = useOrder(userId, false);
+  const { orders } = useOrder(userId, false);
 
   useEffect(() => {
     const fetchBookings = async () => {

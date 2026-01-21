@@ -116,7 +116,7 @@ export function getSlotsNeeded(
  */
 export function areConsecutive(
   slots: { time: string }[],
-  selectedDate: string,
+  _selectedDate: string,
 ): boolean {
   for (let i = 1; i < slots.length; i++) {
     const prev = parseTime(slots[i - 1].time);
