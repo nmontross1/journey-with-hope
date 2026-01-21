@@ -40,6 +40,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     getUser();
+
+    // Listen for auth state changes (login, logout, etc.)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        // Fetch the profile to get the role
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+
+        setUser({
+          ...session.user,
+          profile: profile,
+          is_admin: profile?.role === "admin",
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   return (
