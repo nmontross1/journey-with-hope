@@ -18,23 +18,17 @@ export function ProtectedRoute({ adminOnly = false }: ProtectedRouteProps) {
     );
   }
 
-  // Check if user is authenticated
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check if admin access is required
-  if (adminOnly && user.profile?.role !== "admin") {
+  if (adminOnly && !user.is_admin) {
     return (
       <Layout>
-        <div className="max-w-3xl mx-auto py-16 px-4 text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">
+        <div className="py-16 text-center">
+          <h1 className="text-2xl font-bold text-red-600">
             Access Denied
           </h1>
-          <p style={{ color: "#f5f1e6" }}>
-            You do not have permission to view this page.
-          </p>
-          <img src="/galaxy.jpg" alt="" />
         </div>
       </Layout>
     );

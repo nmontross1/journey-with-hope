@@ -43,7 +43,7 @@ export default function LoginPage() {
     "December",
   ];
 
-  useEffect(() => {
+    useEffect(() => {
     register("birthMonth", { required: isRegistering });
     register("contactMethod", { required: isRegistering });
   }, [register, isRegistering]);
@@ -52,34 +52,44 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if ((isRegistering || forgotPassword) && !captchaDone) {
-        toast.error("Please complete the CAPTCHA before continuing.");
-        setLoading(false);
+        toast.error("Please complete the CAPTCHA.");
         return;
       }
 
+      // Forgot password
       if (forgotPassword) {
-        const email = (data as LoginForm).email;
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
+        const { error } = await supabase.auth.resetPasswordForEmail(
+          (data as LoginForm).email,
+          { redirectTo: `${window.location.origin}/reset-password` }
+        );
         if (error) throw error;
+
         toast.success("Password reset email sent!");
         setForgotPassword(false);
         setCaptchaDone(false);
-      } else if (isRegistering) {
+        return;
+      }
+
+      // Register
+      if (isRegistering) {
         const d = data as RegisterForm;
         if (d.password !== d.confirmPassword) {
           toast.error("Passwords do not match");
-          setLoading(false);
           return;
         }
-        const { data: signUpData, error: signUpError } =
-          await supabase.auth.signUp({ email: d.email, password: d.password });
-        if (signUpError) throw signUpError;
-        if (!signUpData.user) throw new Error("User not returned.");
 
-        const { error: profileError } = await supabase.from("profiles").insert([
-          {
+        const { data: signUpData, error } =
+          await supabase.auth.signUp({
+            email: d.email,
+            password: d.password,
+          });
+
+        if (error) throw error;
+        if (!signUpData.user) throw new Error("User not created");
+
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
             id: signUpData.user.id,
             name: d.name,
             birth_month: d.birthMonth,
@@ -87,42 +97,29 @@ export default function LoginPage() {
             over_18: d.over18,
             contact_method: d.contactMethod,
             email: d.email,
-          },
-        ]);
+          });
+
         if (profileError) throw profileError;
 
         toast.success("Registration successful!");
         navigate("/");
-        setCaptchaDone(false);
-      } else {
-        const d = data as LoginForm;
-        const { data: signInData, error: authError } =
-          await supabase.auth.signInWithPassword({
-            email: d.email,
-            password: d.password,
-          });
-        if (authError) throw authError;
-        if (!signInData.session) throw new Error("Session not returned.");
-
-        await supabase.auth.setSession(signInData.session);
-        const { data: userData, error: userError } =
-          await supabase.auth.getUser();
-        if (userError) throw userError;
-        if (!userData.user) throw new Error("Unable to load user.");
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", userData.user.id)
-          .maybeSingle();
-
-        toast.success("You are logged in successfully!");
-        if (profile?.role === "admin") navigate("/admin");
-        else navigate("/");
+        return;
       }
+
+      // Login
+      const { error } = await supabase.auth.signInWithPassword({
+        email: (data as LoginForm).email,
+        password: (data as LoginForm).password,
+      });
+
+      if (error) throw error;
+
+      toast.success("Logged in successfully!");
+      navigate("/"); // ⬅️ ROLE DECISION MOVED TO ROUTES
+
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Something went wrong.");
+      toast.error(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
