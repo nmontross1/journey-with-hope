@@ -43,7 +43,7 @@ export default function LoginPage() {
     "December",
   ];
 
-    useEffect(() => {
+  useEffect(() => {
     register("birthMonth", { required: isRegistering });
     register("contactMethod", { required: isRegistering });
   }, [register, isRegistering]);
@@ -60,7 +60,7 @@ export default function LoginPage() {
       if (forgotPassword) {
         const { error } = await supabase.auth.resetPasswordForEmail(
           (data as LoginForm).email,
-          { redirectTo: `${window.location.origin}/reset-password` }
+          { redirectTo: `${window.location.origin}/reset-password` },
         );
         if (error) throw error;
 
@@ -78,26 +78,23 @@ export default function LoginPage() {
           return;
         }
 
-        const { data: signUpData, error } =
-          await supabase.auth.signUp({
-            email: d.email,
-            password: d.password,
-          });
+        const { data: signUpData, error } = await supabase.auth.signUp({
+          email: d.email,
+          password: d.password,
+        });
 
         if (error) throw error;
         if (!signUpData.user) throw new Error("User not created");
 
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: signUpData.user.id,
-            name: d.name,
-            birth_month: d.birthMonth,
-            phone: d.phone,
-            over_18: d.over18,
-            contact_method: d.contactMethod,
-            email: d.email,
-          });
+        const { error: profileError } = await supabase.from("profiles").insert({
+          id: signUpData.user.id,
+          name: d.name,
+          birth_month: d.birthMonth,
+          phone: d.phone,
+          over_18: d.over18,
+          contact_method: d.contactMethod,
+          email: d.email,
+        });
 
         if (profileError) throw profileError;
 
@@ -116,7 +113,6 @@ export default function LoginPage() {
 
       toast.success("Logged in successfully!");
       navigate("/"); // ⬅️ ROLE DECISION MOVED TO ROUTES
-
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Something went wrong");

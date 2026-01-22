@@ -26,9 +26,7 @@ export function ProtectedRoute({ adminOnly = false }: ProtectedRouteProps) {
     return (
       <Layout>
         <div className="py-16 text-center">
-          <h1 className="text-2xl font-bold text-red-600">
-            Access Denied
-          </h1>
+          <h1 className="text-2xl font-bold text-red-600">Access Denied</h1>
         </div>
       </Layout>
     );
