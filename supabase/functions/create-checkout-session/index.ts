@@ -38,15 +38,13 @@ const stripe = new Stripe(STRIPE_SECRET_KEY, {
   apiVersion: "2023-10-16",
 });
 
-/* ----------------------------- CORS ------------------------------ */
-
-// Allow both localhost for dev and production domain
-const ALLOWED_ORIGINS = ["http://localhost:5173", FRONTEND_URL];
-
 /* ---------------------------- Server ----------------------------- */
 
 Deno.serve(async (req) => {
+  // --------- Handle CORS ---------
   const origin = req.headers.get("origin") ?? "";
+  const ALLOWED_ORIGINS = ["http://localhost:5173", FRONTEND_URL];
+
   const corsHeaders = {
     "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin)
       ? origin
@@ -55,17 +53,15 @@ Deno.serve(async (req) => {
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
 
-  // Handle preflight
+  // Respond immediately to preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
     /* ---------------------- Parse Request ----------------------- */
-
     const bodyText = await req.text();
     const body: CheckoutRequestBody = JSON.parse(bodyText);
-
     const { user_id, cart } = body;
 
     if (!user_id || !Array.isArray(cart) || cart.length === 0) {
@@ -76,7 +72,6 @@ Deno.serve(async (req) => {
     }
 
     /* ----------------------- Validate User ----------------------- */
-
     const { data: userData, error: userError } =
       await supabase.auth.admin.getUserById(user_id);
 
@@ -88,7 +83,6 @@ Deno.serve(async (req) => {
     }
 
     /* --------------------- Fetch Products ------------------------ */
-
     const productIds = [...new Set(cart.map((item) => item.id))];
 
     const { data: products, error: productsError } = await supabase
@@ -105,7 +99,6 @@ Deno.serve(async (req) => {
     );
 
     /* --------------------- Build Line Items ---------------------- */
-
     const line_items = cart.map((item: CartItem) => {
       const product = productMap.get(item.id);
 
@@ -133,7 +126,6 @@ Deno.serve(async (req) => {
     });
 
     /* ------------------- Create Stripe Session ------------------- */
-
     const session = await stripe.checkout.sessions.create(
       {
         payment_method_types: ["card"],
@@ -144,14 +136,10 @@ Deno.serve(async (req) => {
         success_url: `${FRONTEND_URL}/profile`,
         cancel_url: `${FRONTEND_URL}/cart`,
         metadata: { user_id },
-        shipping_address_collection: {
-          allowed_countries: STRIPE_ALLOWED_COUNTRIES,
-        },
-        automatic_tax: { enabled: true },
+        shipping_address_collection: { allowed_countries: STRIPE_ALLOWED_COUNTRIES },
+        automatic_tax: { enabled: true }, // ✅ Taxes enabled
       },
-      {
-        idempotencyKey: crypto.randomUUID(),
-      },
+      { idempotencyKey: crypto.randomUUID() },
     );
 
     return new Response(JSON.stringify({ url: session.url }), {
