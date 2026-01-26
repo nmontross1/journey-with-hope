@@ -68,7 +68,8 @@ Deno.serve(async (req) => {
       if (!product) throw new Error(`Product not found: ${item.id}`);
 
       const quantity = Math.max(1, Math.min(item.quantity, 10));
-      if (quantity > product.quantity) throw new Error(`Insufficient stock for ${product.name}`);
+      if (quantity > product.quantity)
+        throw new Error(`Insufficient stock for ${product.name}`);
 
       return {
         price_data: {
@@ -93,7 +94,9 @@ Deno.serve(async (req) => {
       success_url: `${FRONTEND_URL}/profile`,
       cancel_url: `${FRONTEND_URL}/cart`,
       metadata: { user_id },
-      shipping_address_collection: { allowed_countries: STRIPE_ALLOWED_COUNTRIES },
+      shipping_address_collection: {
+        allowed_countries: STRIPE_ALLOWED_COUNTRIES,
+      },
       automatic_tax: { enabled: true }, // ✅ Automatic taxes
     });
 
