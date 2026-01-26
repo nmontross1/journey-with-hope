@@ -40,20 +40,24 @@ const stripe = new Stripe(STRIPE_SECRET_KEY, {
 
 /* ----------------------------- CORS ------------------------------ */
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": FRONTEND_URL,
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+// Allow both localhost for dev and production domain
+const ALLOWED_ORIGINS = ["http://localhost:5173", FRONTEND_URL];
 
 /* ---------------------------- Server ----------------------------- */
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get("origin") ?? "";
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin)
+      ? origin
+      : "",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+
+  // Handle preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
@@ -85,7 +89,7 @@ Deno.serve(async (req) => {
 
     /* --------------------- Fetch Products ------------------------ */
 
-    const productIds = cart.map((item) => item.id);
+    const productIds = [...new Set(cart.map((item) => item.id))];
 
     const { data: products, error: productsError } = await supabase
       .from("products")
@@ -120,9 +124,7 @@ Deno.serve(async (req) => {
           currency: "usd",
           product_data: {
             name: product.name,
-            metadata: {
-              product_id: String(product.id),
-            },
+            metadata: { product_id: String(product.id) },
           },
           unit_amount: Math.round(product.price * 100),
         },
@@ -138,9 +140,7 @@ Deno.serve(async (req) => {
         mode: "payment",
         line_items,
         client_reference_id: user_id,
-        phone_number_collection: {
-          enabled: true,
-        },
+        phone_number_collection: { enabled: true },
         success_url: `${FRONTEND_URL}/profile`,
         cancel_url: `${FRONTEND_URL}/cart`,
         metadata: { user_id },
@@ -160,7 +160,6 @@ Deno.serve(async (req) => {
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
-
     console.error("Checkout error:", message);
 
     return new Response(JSON.stringify({ error: message }), {
