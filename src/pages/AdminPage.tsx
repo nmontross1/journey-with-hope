@@ -13,7 +13,6 @@ import { FiPlus, FiX } from "react-icons/fi";
 import { getNowInNY, formatUTCDate } from "@/utils/utils.ts";
 import Logo from "@/components/Logo";
 import ImageUpload from "@/components/ImageUpload";
-import ImageUploadWithRotate from "@/components/ImageUploadWithRotate";
 import type { Product } from "@/types/Product.ts";
 import type { Event } from "@/types/Event.ts";
 import { toast } from "react-toastify";
@@ -1187,7 +1186,7 @@ export default function AdminPage() {
 
               {/* Image Upload with Rotation */}
               <div className="md:col-span-2">
-                <ImageUploadWithRotate
+                <ImageUpload
                   bucket="images"
                   folder="products"
                   value={editingProduct.image || []}
