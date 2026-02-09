@@ -287,7 +287,7 @@ export default function AdminPage() {
       setProducts(productsData || []);
       setEditingProduct(null);
       setPendingProductImages([]);
-      toast.success("Product updated successfully");
+      toast.success(`Product "${updatedProduct.name}" updated successfully!`);
     } catch (err: any) {
       toast.error("Update product failed: " + err.message);
     }
@@ -744,11 +744,11 @@ export default function AdminPage() {
                     Type
                   </label>
                   {showNewTypeInput ? (
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row sm:gap-2 gap-2 w-full">
                       <input
                         type="text"
                         placeholder="New type..."
-                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1 w-full"
                         value={newProductType}
                         onChange={(e) => setNewProductType(e.target.value)}
                         autoFocus
@@ -765,7 +765,7 @@ export default function AdminPage() {
                             setShowNewTypeInput(false);
                           }
                         }}
-                        className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
+                        className="w-full sm:w-auto px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
                       >
                         Add
                       </button>
@@ -775,15 +775,15 @@ export default function AdminPage() {
                           setShowNewTypeInput(false);
                           setNewProductType("");
                         }}
-                        className="px-3 py-2 rounded-lg bg-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-400 transition"
+                        className="w-full sm:w-auto px-3 py-2 rounded-lg bg-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-400 transition"
                       >
                         Cancel
                       </button>
                     </div>
                   ) : (
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row sm:gap-2 gap-2 w-full">
                       <select
-                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1 w-full"
                         value={newProduct.type}
                         onChange={(e) =>
                           setNewProduct((prev) => ({
@@ -812,7 +812,7 @@ export default function AdminPage() {
                       <button
                         type="button"
                         onClick={() => setShowNewTypeInput(true)}
-                        className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition whitespace-nowrap"
+                        className="w-full sm:w-auto px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition whitespace-nowrap"
                       >
                         + New
                       </button>
