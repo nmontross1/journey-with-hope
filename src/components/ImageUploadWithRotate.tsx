@@ -6,15 +6,15 @@ import { FiRotateCw, FiTrash2 } from "react-icons/fi";
 type LocalImage = {
   url: string;
   rotation: number;
-  file?: File;
+  file?: File; // only present before upload
 };
 
 export interface ImageUploadWithRotateProps {
   bucket: string;
   folder: string;
   value?: string[];
-  onUpload?: (urls: string[]) => void;
   onChange?: (urls: string[]) => void;
+  onUpload?: (urls: string[]) => void;
 }
 
 export default function ImageUploadWithRotate({
@@ -31,6 +31,7 @@ export default function ImageUploadWithRotate({
     setLocalImages(value.map((url) => ({ url, rotation: 0 })));
   }, [value]);
 
+  // Upload a single image (with rotation applied)
   const uploadRotatedImage = async (img: LocalImage): Promise<string> => {
     if (!img.file) return img.url;
 
@@ -69,6 +70,7 @@ export default function ImageUploadWithRotate({
       const { data: uploadData, error } = await supabase.storage
         .from(bucket)
         .upload(`${folder}/${file.name}`, file, { upsert: true });
+
       if (error || !uploadData) throw error || new Error("Upload failed");
 
       const { data } = supabase.storage
@@ -83,12 +85,15 @@ export default function ImageUploadWithRotate({
     }
   };
 
+  // Handle multiple file selection
   const handleFiles = (files: FileList) => {
-    const urls = Array.from(files).map((file) => URL.createObjectURL(file));
-    setLocalImages((prev) => [
-      ...prev,
-      ...urls.map((u, i) => ({ url: u, rotation: 0, file: files[i] })),
-    ]);
+    const newImages = Array.from(files).map((file) => ({
+      url: URL.createObjectURL(file),
+      rotation: 0,
+      file,
+    }));
+
+    setLocalImages((prev) => [...prev, ...newImages]);
   };
 
   const rotateImage = (url: string) => {
@@ -111,14 +116,15 @@ export default function ImageUploadWithRotate({
       imgs.map((img, i) => ({ ...img, url: uploadedUrls[i], file: undefined })),
     );
     onChange?.(uploadedUrls);
+    toast.success("All images uploaded!");
   };
 
   return (
     <div className="space-y-4">
-      {/* Uploaded Images */}
+      {/* Preview / Uploaded Images */}
       {localImages.length > 0 && (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-700">Uploaded Images</p>
+          <p className="text-sm font-medium text-gray-700">Images</p>
           <div className="grid grid-cols-3 gap-3">
             {localImages.map((img) => (
               <div key={img.url} className="relative group">
@@ -128,7 +134,7 @@ export default function ImageUploadWithRotate({
                   className="w-full object-contain rounded-lg border"
                   style={{
                     transform: `rotate(${img.rotation}deg)`,
-                    maxHeight: "400px", // ensures tall images fit
+                    maxHeight: "400px",
                   }}
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-lg transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
@@ -149,6 +155,11 @@ export default function ImageUploadWithRotate({
                     <FiTrash2 size={16} />
                   </button>
                 </div>
+                {img.file && (
+                  <span className="absolute bottom-1 left-1 text-xs text-gray-600 bg-white px-1 rounded">
+                    Preview
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -157,7 +168,7 @@ export default function ImageUploadWithRotate({
 
       {/* File Input */}
       <div className="space-y-1">
-        <p className="text-sm font-medium text-gray-700">Add More Images</p>
+        <p className="text-sm font-medium text-gray-700">Add Images</p>
         <input
           type="file"
           multiple
