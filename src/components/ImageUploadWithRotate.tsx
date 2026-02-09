@@ -26,7 +26,7 @@ export default function ImageUploadWithRotate({
 }: ImageUploadWithRotateProps) {
   // Initialize with existing images
   const [localImages, setLocalImages] = useState<LocalImage[]>(
-    value.map((url) => ({ url, rotation: 0 }))
+    value.map((url) => ({ url, rotation: 0 })),
   );
 
   // Keep in sync if parent value changes
@@ -58,12 +58,12 @@ export default function ImageUploadWithRotate({
         -imgEl.width / 2,
         -imgEl.height / 2,
         imgEl.width,
-        imgEl.height
+        imgEl.height,
       );
 
       const type = img.file.type || "image/jpeg";
       const blob: Blob | null = await new Promise((res) =>
-        canvas.toBlob(res, type, type === "image/jpeg" ? 1 : undefined)
+        canvas.toBlob(res, type, type === "image/jpeg" ? 1 : undefined),
       );
       if (!blob) throw new Error("Failed to convert canvas to blob");
 
@@ -97,8 +97,8 @@ export default function ImageUploadWithRotate({
   const rotateImage = (url: string) => {
     setLocalImages((imgs) =>
       imgs.map((img) =>
-        img.url === url ? { ...img, rotation: (img.rotation + 90) % 360 } : img
-      )
+        img.url === url ? { ...img, rotation: (img.rotation + 90) % 360 } : img,
+      ),
     );
   };
 
@@ -111,7 +111,7 @@ export default function ImageUploadWithRotate({
   const uploadAll = async () => {
     const uploadedUrls = await Promise.all(localImages.map(uploadRotatedImage));
     setLocalImages((imgs) =>
-      imgs.map((img, i) => ({ ...img, url: uploadedUrls[i], file: undefined }))
+      imgs.map((img, i) => ({ ...img, url: uploadedUrls[i], file: undefined })),
     );
     onChange?.(uploadedUrls);
   };

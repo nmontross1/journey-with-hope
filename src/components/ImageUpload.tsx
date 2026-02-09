@@ -19,7 +19,6 @@ export default function ImageUpload({
   folder,
   value = [],
   onUpload,
-  aspect = 1,
 }: Props) {
   const [uploading, setUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -177,10 +176,12 @@ export default function ImageUpload({
               image={imageSrc}
               crop={crop}
               zoom={zoom}
-              aspect={aspect}
+              aspect={undefined} // ❌ null disables forced aspect ratio
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={onCropComplete}
+              objectFit="contain" // ensures the whole image is visible
+              cropShape="rect" // can be rect or round, doesn’t matter here
             />
 
             <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-3">
