@@ -828,7 +828,6 @@ export default function AdminPage() {
                     folder="products"
                     value={newProduct.image} // saved images (optional)
                     onUpload={(urls) => setPendingProductImages(urls)} // only update pending
-                    aspect={16 / 9}
                   />
                 </div>
 
@@ -1038,7 +1037,6 @@ export default function AdminPage() {
                     folder="events"
                     value={newEvent.image} // saved images (optional)
                     onUpload={(urls) => setPendingEventImages(urls)} // only update pending
-                    aspect={16 / 9}
                   />
                 </div>
 

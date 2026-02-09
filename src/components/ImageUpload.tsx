@@ -1,5 +1,4 @@
-import { useState, useCallback } from "react";
-import Cropper from "react-easy-crop";
+import { useState } from "react";
 import { supabase } from "@/libs/supabaseClient";
 import { FiUpload, FiTrash2 } from "react-icons/fi";
 import { toast } from "react-toastify";
@@ -7,9 +6,8 @@ import { toast } from "react-toastify";
 type Props = {
   bucket: string;
   folder: string;
-  value?: string[]; // saved images from parent
-  onUpload: (urls: string[]) => void; // ✅ call this when images change
-  aspect?: number;
+  value?: string[]; // existing images
+  onUpload: (urls: string[]) => void;
 };
 
 const brandColor = "#d6c47f";
@@ -21,114 +19,59 @@ export default function ImageUpload({
   onUpload,
 }: Props) {
   const [uploading, setUploading] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
-  // ✅ Pending uploads locally
-  const [pendingImages, setPendingImages] = useState<string[]>([]);
-
-  const onCropComplete = useCallback((_: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
-
-  const createImage = (url: string) =>
-    new Promise<HTMLImageElement>((resolve, reject) => {
-      const image = new Image();
-      image.addEventListener("load", () => resolve(image));
-      image.addEventListener("error", reject);
-      image.src = url;
-    });
-
-  const getCroppedImg = async () => {
-    const image = await createImage(imageSrc!);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d")!;
-
-    canvas.width = croppedAreaPixels.width;
-    canvas.height = croppedAreaPixels.height;
-
-    ctx.drawImage(
-      image,
-      croppedAreaPixels.x,
-      croppedAreaPixels.y,
-      croppedAreaPixels.width,
-      croppedAreaPixels.height,
-      0,
-      0,
-      croppedAreaPixels.width,
-      croppedAreaPixels.height,
-    );
-
-    return new Promise<Blob>((resolve) => {
-      canvas.toBlob((blob) => resolve(blob!), "image/png");
-    });
-  };
-
-  const uploadCroppedImage = async () => {
+  // Upload the full image directly to Supabase
+  const uploadFullImage = async (file: File) => {
     try {
       setUploading(true);
 
-      const blob = await getCroppedImg();
-      const fileName = `${crypto.randomUUID()}.png`;
+      // Ensure high quality by uploading the file directly
+      const fileName = `${crypto.randomUUID()}-${file.name}`;
       const filePath = `${folder}/${fileName}`;
 
-      const { error } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(filePath, blob);
-      if (error) throw error;
+        .upload(filePath, file, { upsert: true });
 
-      const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
-      const url = data.publicUrl;
+      if (error || !data) throw error || new Error("Upload failed");
 
-      // ✅ Add to pending images
-      const updatedPending = [...pendingImages, url];
-      setPendingImages(updatedPending);
+      const { data: publicData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(filePath);
 
-      // ✅ Notify parent of all images (saved + pending)
-      onUpload([...value, ...updatedPending]);
+      if (!publicData?.publicUrl) throw new Error("Failed to get public URL");
 
-      setImageSrc(null);
+      // Notify parent
+      onUpload([...value, publicData.publicUrl]);
       toast.success("Image uploaded!");
     } catch (err: any) {
-      toast.error("Upload failed");
+      toast.error("Upload failed: " + (err.message || err));
     } finally {
       setUploading(false);
     }
   };
 
-  const removeImage = (index: number) => {
-    let updatedPending = [...pendingImages];
-    let updatedValue = [...value];
-
-    if (index >= value.length) {
-      // remove from pending
-      updatedPending.splice(index - value.length, 1);
-      setPendingImages(updatedPending);
-    } else {
-      // remove from saved value
-      updatedValue.splice(index, 1);
-    }
-
-    // Notify parent of updated list
-    onUpload([...updatedValue, ...updatedPending]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    uploadFullImage(file);
   };
 
-  const allImages = [...value, ...pendingImages];
+  const removeImage = (index: number) => {
+    const updated = [...value];
+    updated.splice(index, 1);
+    onUpload(updated);
+  };
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Image Grid */}
-      {allImages.length > 0 && (
+      {value.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
-          {allImages.map((img, index) => (
+          {value.map((img, index) => (
             <div key={img} className="relative">
               <img
                 src={img}
-                className="w-full aspect-square object-cover rounded-lg border cursor-pointer"
-                onClick={() => setPreviewImage(img)}
+                className="w-full aspect-square object-contain rounded-lg border cursor-pointer"
               />
               <button
                 type="button"
@@ -142,7 +85,6 @@ export default function ImageUpload({
         </div>
       )}
 
-      {/* Upload Button */}
       <label
         className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer flex flex-col items-center gap-1"
         style={{ borderColor: brandColor }}
@@ -151,73 +93,17 @@ export default function ImageUpload({
         <span className="text-sm font-medium" style={{ color: brandColor }}>
           Click to upload image
         </span>
-        <span className="text-xs text-gray-500">PNG, JPG up to ~5MB</span>
+        <span className="text-xs text-gray-500">PNG, JPG up to ~10MB</span>
 
         <input
           type="file"
           hidden
           accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = () => setImageSrc(reader.result as string);
-            reader.readAsDataURL(file);
-          }}
+          onChange={handleFileChange}
         />
       </label>
 
-      {/* Crop Modal */}
-      {imageSrc && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="relative w-full max-w-lg h-[500px] bg-white rounded-xl overflow-hidden">
-            <Cropper
-              image={imageSrc}
-              crop={crop}
-              zoom={zoom}
-              aspect={undefined} // ❌ null disables forced aspect ratio
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={onCropComplete}
-              objectFit="contain" // ensures the whole image is visible
-              cropShape="rect" // can be rect or round, doesn’t matter here
-            />
-
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setImageSrc(null)}
-                className="bg-gray-200 px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={uploadCroppedImage}
-                className="bg-black text-white px-4 py-2 rounded"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Fullscreen Preview */}
-      {previewImage && (
-        <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
-          onClick={() => setPreviewImage(null)}
-        >
-          <img
-            src={previewImage}
-            className="max-w-full max-h-full object-contain"
-          />
-        </div>
-      )}
-
-      {uploading && <span className="text-xs">Uploading...</span>}
+      {uploading && <span className="text-xs text-gray-600">Uploading...</span>}
     </div>
   );
 }
