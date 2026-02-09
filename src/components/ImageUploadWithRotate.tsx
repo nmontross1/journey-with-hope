@@ -1,94 +1,182 @@
-import { useState } from "react";
-import ImageUpload from "@/components/ImageUpload";
+import { useState, useEffect } from "react";
+import { supabase } from "@/libs/supabaseClient";
+import { toast } from "react-toastify";
 import { FiRotateCw, FiTrash2 } from "react-icons/fi";
 
-type Props = {
+type LocalImage = {
+  url: string;
+  rotation: number;
+  file?: File;
+};
+
+export interface ImageUploadWithRotateProps {
   bucket: string;
   folder: string;
   value?: string[];
-  onUpload: (urls: string[]) => void;
+  onUpload?: (urls: string[]) => void;
+  onChange?: (urls: string[]) => void;
   aspect?: number;
-};
+}
 
 export default function ImageUploadWithRotate({
   bucket,
   folder,
   value = [],
-  onUpload,
-  aspect = 1,
-}: Props) {
-  const [rotations, setRotations] = useState<Record<string, number>>({});
+  onChange,
+}: ImageUploadWithRotateProps) {
+  // Initialize with existing images
+  const [localImages, setLocalImages] = useState<LocalImage[]>(
+    value.map((url) => ({ url, rotation: 0 }))
+  );
 
-  const rotateImage = (url: string) => {
-    setRotations((prev) => ({
-      ...prev,
-      [url]: ((prev[url] || 0) + 90) % 360,
-    }));
+  // Keep in sync if parent value changes
+  useEffect(() => {
+    setLocalImages(value.map((url) => ({ url, rotation: 0 })));
+  }, [value]);
+
+  // Upload rotated image
+  const uploadRotatedImage = async (img: LocalImage): Promise<string> => {
+    if (!img.file) return img.url; // already uploaded
+    try {
+      const imgEl = new Image();
+      imgEl.src = URL.createObjectURL(img.file);
+      await new Promise((res) => (imgEl.onload = res));
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas not supported");
+
+      const rotation = img.rotation;
+      const isVertical = rotation % 180 !== 0;
+      canvas.width = isVertical ? imgEl.height : imgEl.width;
+      canvas.height = isVertical ? imgEl.width : imgEl.height;
+
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.drawImage(
+        imgEl,
+        -imgEl.width / 2,
+        -imgEl.height / 2,
+        imgEl.width,
+        imgEl.height
+      );
+
+      const type = img.file.type || "image/jpeg";
+      const blob: Blob | null = await new Promise((res) =>
+        canvas.toBlob(res, type, type === "image/jpeg" ? 1 : undefined)
+      );
+      if (!blob) throw new Error("Failed to convert canvas to blob");
+
+      const file = new File([blob], img.file.name, { type: blob.type });
+
+      const { data: uploadData, error } = await supabase.storage
+        .from(bucket)
+        .upload(`${folder}/${file.name}`, file, { upsert: true });
+      if (error || !uploadData) throw error || new Error("Upload failed");
+
+      const { data } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(uploadData.path);
+      if (!data?.publicUrl) throw new Error("Failed to get public URL");
+
+      return data.publicUrl;
+    } catch (err: any) {
+      toast.error("Upload failed: " + (err.message || err));
+      return img.url;
+    }
   };
 
-  const removeImage = (urlToRemove: string) => {
-    const updated = value.filter((url) => url !== urlToRemove);
-    onUpload(updated);
-    setRotations((prev) => {
-      const newRotations = { ...prev };
-      delete newRotations[urlToRemove];
-      return newRotations;
-    });
+  const handleFiles = (files: FileList) => {
+    const urls = Array.from(files).map((file) => URL.createObjectURL(file));
+    setLocalImages((prev) => [
+      ...prev,
+      ...urls.map((u, i) => ({ url: u, rotation: 0, file: files[i] })),
+    ]);
+  };
+
+  const rotateImage = (url: string) => {
+    setLocalImages((imgs) =>
+      imgs.map((img) =>
+        img.url === url ? { ...img, rotation: (img.rotation + 90) % 360 } : img
+      )
+    );
+  };
+
+  const removeImage = (url: string) => {
+    const updated = localImages.filter((img) => img.url !== url);
+    setLocalImages(updated);
+    onChange?.(updated.map((img) => img.url));
+  };
+
+  const uploadAll = async () => {
+    const uploadedUrls = await Promise.all(localImages.map(uploadRotatedImage));
+    setLocalImages((imgs) =>
+      imgs.map((img, i) => ({ ...img, url: uploadedUrls[i], file: undefined }))
+    );
+    onChange?.(uploadedUrls);
   };
 
   return (
     <div className="space-y-4">
-      {/* Display images with rotation controls */}
-      {value.length > 0 && (
+      {/* Uploaded Images */}
+      {localImages.length > 0 && (
         <div className="space-y-3">
           <p className="text-sm font-medium text-gray-700">Uploaded Images</p>
           <div className="grid grid-cols-3 gap-3">
-            {value.map((img) => {
-              const rotation = rotations[img] || 0;
-              return (
-                <div key={img} className="relative group">
-                  <img
-                    src={img}
-                    alt="uploaded"
-                    className="w-full aspect-square object-cover rounded-lg border"
-                    style={{ transform: `rotate(${rotation}deg)` }}
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-lg transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                    <button
-                      type="button"
-                      onClick={() => rotateImage(img)}
-                      className="bg-white text-gray-800 p-2 rounded-full hover:bg-gray-100"
-                      title="Rotate 90°"
-                    >
-                      <FiRotateCw size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeImage(img)}
-                      className="bg-white text-red-600 p-2 rounded-full hover:bg-gray-100"
-                      title="Remove"
-                    >
-                      <FiTrash2 size={16} />
-                    </button>
-                  </div>
+            {localImages.map((img) => (
+              <div key={img.url} className="relative group">
+                <img
+                  src={img.url}
+                  alt="uploaded"
+                  className="w-full aspect-square object-cover rounded-lg border"
+                  style={{ transform: `rotate(${img.rotation}deg)` }}
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-lg transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => rotateImage(img.url)}
+                    className="bg-white text-gray-800 p-2 rounded-full hover:bg-gray-100"
+                    title="Rotate 90°"
+                  >
+                    <FiRotateCw size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeImage(img.url)}
+                    className="bg-white text-red-600 p-2 rounded-full hover:bg-gray-100"
+                    title="Remove"
+                  >
+                    <FiTrash2 size={16} />
+                  </button>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Upload new images */}
+      {/* File Input */}
       <div className="space-y-1">
         <p className="text-sm font-medium text-gray-700">Add More Images</p>
-        <ImageUpload
-          bucket={bucket}
-          folder={folder}
-          value={[]}
-          onUpload={(newUrls) => onUpload([...value, ...newUrls])}
-          aspect={aspect}
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={(e) => e.target.files && handleFiles(e.target.files)}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
         />
       </div>
+
+      {/* Upload Button */}
+      {localImages.some((img) => img.file) && (
+        <button
+          type="button"
+          onClick={uploadAll}
+          className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Upload All
+        </button>
+      )}
     </div>
   );
 }
