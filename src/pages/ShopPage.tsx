@@ -103,8 +103,15 @@ export default function ShopPage() {
       const { data, error } = await supabase.from("products").select("*");
       if (error) return console.error(error);
       if (data) {
-        setProducts(data);
-        setTypes(Array.from(new Set(data.map((p: Product) => p.type))));
+        const cleaned = data.map((p: Product) => ({
+          ...p,
+          type: p.type.trim(),
+        }));
+
+        setProducts(cleaned);
+
+        const uniqueTypes = [...new Set(cleaned.map((p) => p.type))];
+        setTypes(uniqueTypes);
       }
     }
     fetchProducts();

@@ -196,9 +196,9 @@ export default function AdminPage() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     const product: Partial<Product> = {
-      name: newProduct.name,
-      type: newProduct.type,
-      description: newProduct.description,
+      name: newProduct.name.trim(),
+      type: newProduct.type.trim(),
+      description: newProduct.description.trim(),
       image: newProduct.image,
       price: +newProduct.price,
       quantity: +newProduct.quantity,
