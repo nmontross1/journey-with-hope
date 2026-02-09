@@ -8,6 +8,19 @@ import { formatUTCDate } from "@/utils/utils";
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpandedEvents((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -45,44 +58,65 @@ export default function EventsPage() {
           <p className="text-gray-500 text-center">No upcoming events.</p>
         ) : (
           <div className="flex flex-wrap justify-center gap-8">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden w-full max-w-md"
-              >
-                {event.image && (
-                  <img
-                    src={event.image}
-                    alt={event.title}
-                    className="h-48 w-full object-cover"
-                  />
-                )}
+            {events.map((event) => {
+              const isExpanded = expandedEvents.has(event.id);
 
-                <div className="p-6">
-                  <h2 className="text-2xl font-semibold text-[#d6c47f] mb-2">
-                    {event.title}
-                  </h2>
+              return (
+                <div
+                  key={event.id}
+                  className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden w-full max-w-md"
+                >
+                  {event.image && (
+                    <img
+                      src={event.image}
+                      alt={event.title}
+                      className="h-48 w-full object-cover"
+                    />
+                  )}
 
-                  <p className="text-gray-600 mb-2">
-                    <strong>When: </strong> {formatUTCDate(event.start_date)} –{" "}
-                    {formatUTCDate(event.end_date)}
-                  </p>
+                  <div className="p-6">
+                    <h2 className="text-2xl font-semibold text-[#d6c47f] mb-2">
+                      {event.title}
+                    </h2>
 
-                  {(event.location || event.address) && (
                     <p className="text-gray-600 mb-2">
-                      <strong>Where: </strong>
-                      {[event.location, event.address]
-                        .filter(Boolean)
-                        .join(", ")}
+                      <strong>When: </strong> {formatUTCDate(event.start_date)}{" "}
+                      – {formatUTCDate(event.end_date)}
                     </p>
-                  )}
 
-                  {event.description && (
-                    <p className="text-gray-600 mt-2">{event.description}</p>
-                  )}
+                    {(event.location || event.address) && (
+                      <p className="text-gray-600 mb-2">
+                        <strong>Where: </strong>
+                        {[event.location, event.address]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    )}
+
+                    {event.description && (
+                      <div className="mt-2">
+                        <p
+                          className={`text-gray-600 transition-all duration-300 ${
+                            isExpanded ? "" : "line-clamp-3"
+                          }`}
+                        >
+                          {event.description}
+                        </p>
+
+                        {event.description.length > 120 && (
+                          <button
+                            onClick={() => toggleExpand(event.id)}
+                            className="text-[#d6c47f] font-medium mt-1 hover:underline"
+                          >
+                            {isExpanded ? "See less" : "See more"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
