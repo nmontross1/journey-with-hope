@@ -16,71 +16,159 @@ type ProductCardProps = {
 };
 
 function ProductCard({ product, onAdd }: ProductCardProps) {
+  const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(
+    null,
+  );
   const isSoldOut = product.quantity === 0;
+  const images =
+    product.image && product.image.length > 0
+      ? product.image
+      : ["/placeholder.png"];
+  const currentImageIndex = previewImageIndex ?? 0;
+
+  const handlePreviousImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPreviewImageIndex((prev) => {
+      if (prev === null) return images.length - 1;
+      return prev === 0 ? images.length - 1 : prev - 1;
+    });
+  };
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPreviewImageIndex((prev) => {
+      if (prev === null) return 1 % images.length;
+      return (prev + 1) % images.length;
+    });
+  };
 
   return (
-    <div
-      className={`rounded-xl shadow-lg overflow-hidden flex flex-col ${
-        isSoldOut ? "opacity-60" : ""
-      }`}
-      style={{
-        backgroundColor: `${brandColor}20`,
-        border: `2px solid ${brandColor}`,
-      }}
-    >
-      <img
-        src={product.image || "/placeholder.png"}
-        alt={product.name}
-        className="h-48 w-full object-cover"
-      />
-
-      <div className="p-5 flex-1 flex flex-col">
-        <h2
-          className="text-xl font-semibold mb-2"
-          style={{ color: brandColor }}
-        >
-          {product.name}
-        </h2>
-
-        <p className="mb-1" style={{ color: `${brandColor}cc` }}>
-          {product.type}
-        </p>
-
-        {isSoldOut ? (
-          <p className="text-sm font-semibold mb-2 text-red-600">Sold Out</p>
-        ) : (
-          <p className="text-sm mb-2" style={{ color: `${brandColor}cc` }}>
-            In stock: {product.quantity}
-          </p>
-        )}
-
-        <p
-          className="flex-1 mb-4 break-words"
-          style={{ color: `${brandColor}cc` }}
-        >
-          {product.description}
-        </p>
-
-        <div className="flex items-center justify-between mt-auto">
-          <span className="text-lg font-bold" style={{ color: brandColor }}>
-            ${Number(product.price).toFixed(2)}
-          </span>
-
-          {!isSoldOut && (
-            <button
-              className="px-4 py-2 rounded-lg transition"
-              style={{ backgroundColor: brandColor, color: "black" }}
-              onClick={(e) => {
-                e.preventDefault();
-                onAdd(product);
-              }}
-            >
-              Add to Cart
-            </button>
+    <>
+      <div
+        className={`rounded-xl shadow-lg overflow-hidden flex flex-col ${
+          isSoldOut ? "opacity-60" : ""
+        }`}
+        style={{
+          backgroundColor: `${brandColor}20`,
+          border: `2px solid ${brandColor}`,
+        }}
+      >
+        {/* Image with counter */}
+        <div className="relative">
+          <img
+            src={images[0]}
+            alt={product.name}
+            className="h-48 w-full object-cover cursor-pointer hover:opacity-90 transition"
+            onClick={() => setPreviewImageIndex(0)}
+          />
+          {images.length > 1 && (
+            <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+              {images.length} photos
+            </div>
           )}
         </div>
+
+        <div className="p-5 flex-1 flex flex-col">
+          <h2
+            className="text-xl font-semibold mb-2"
+            style={{ color: brandColor }}
+          >
+            {product.name}
+          </h2>
+
+          <p className="mb-1" style={{ color: `${brandColor}cc` }}>
+            {product.type}
+          </p>
+
+          {isSoldOut ? (
+            <p className="text-sm font-semibold mb-2 text-red-600">Sold Out</p>
+          ) : (
+            <p className="text-sm mb-2" style={{ color: `${brandColor}cc` }}>
+              In stock: {product.quantity}
+            </p>
+          )}
+
+          <p
+            className="flex-1 mb-4 break-words"
+            style={{ color: `${brandColor}cc` }}
+          >
+            {product.description}
+          </p>
+
+          <div className="flex items-center justify-between mt-auto">
+            <span className="text-lg font-bold" style={{ color: brandColor }}>
+              ${Number(product.price).toFixed(2)}
+            </span>
+
+            {!isSoldOut && (
+              <button
+                className="px-4 py-2 rounded-lg transition"
+                style={{ backgroundColor: brandColor, color: "black" }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onAdd(product);
+                }}
+              >
+                Add to Cart
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* Fullscreen Preview */}
+      {previewImageIndex !== null && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+          onClick={() => setPreviewImageIndex(null)}
+        >
+          {/* Previous Button */}
+          {images.length > 1 && (
+            <button
+              onClick={handlePreviousImage}
+              className="absolute left-4 text-white hover:text-gray-300 transition p-2"
+            >
+              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          )}
+
+          {/* Image */}
+          <img
+            src={images[currentImageIndex]}
+            className="max-w-full max-h-full object-contain"
+          />
+
+          {/* Next Button */}
+          {images.length > 1 && (
+            <button
+              onClick={handleNextImage}
+              className="absolute right-4 text-white hover:text-gray-300 transition p-2"
+            >
+              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          )}
+
+          {/* Image Counter */}
+          {images.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm">
+              {currentImageIndex + 1} / {images.length}
+            </div>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 

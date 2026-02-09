@@ -79,7 +79,7 @@ create table public.products (
   description text null,
   price numeric(10, 2) not null,
   quantity integer not null default 0,
-  image text null,
+  image text[] null,
   created_at timestamp with time zone null default now(),
   constraint products_pkey primary key (id)
 ) TABLESPACE pg_default;
@@ -107,7 +107,7 @@ create table public.events (
   title text not null,
   description text not null,
   start_date timestamp with time zone not null,
-  image text null,
+  image text[] null,
   created_at timestamp with time zone null default now(),
   updated_at timestamp with time zone null default now(),
   location text null,

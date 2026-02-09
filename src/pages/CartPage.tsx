@@ -147,7 +147,7 @@ export default function CartPage() {
                         {/* Image + Info */}
                         <div className="flex gap-4 w-full">
                           <img
-                            src={item.image || "/placeholder.png"}
+                            src={item.image?.[0] || "/placeholder.png"}
                             alt={item.name}
                             className="w-20 h-20 rounded-lg object-cover"
                           />
@@ -163,7 +163,7 @@ export default function CartPage() {
 
                             {atMax && (
                               <p className="text-xs text-red-500 mt-1">
-                                Max stock reached
+                                You're buying the last one in stock!
                               </p>
                             )}
                           </div>

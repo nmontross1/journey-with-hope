@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Layout from "./Layout";
 import { useAddProduct } from "@/hooks/useAddProduct";
+import { useUpdateProduct } from "@/hooks/useUpdateProduct";
 import { useAddAvailability } from "@/hooks/useAddAvailability";
 import { useDeleteAvailability } from "@/hooks/useDeleteAvailability";
 import { useDeleteProduct } from "@/hooks/useDeleteProduct";
@@ -8,10 +9,11 @@ import { useDeleteBooking } from "@/hooks/useDeleteBooking";
 import { useAddEvent } from "@/hooks/useAddEvent";
 import { useDeleteEvent } from "@/hooks/useDeleteEvent";
 import { supabase } from "@/libs/supabaseClient";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiX } from "react-icons/fi";
 import { getNowInNY, formatUTCDate } from "@/utils/utils.ts";
 import Logo from "@/components/Logo";
 import ImageUpload from "@/components/ImageUpload";
+import ImageUploadWithRotate from "@/components/ImageUploadWithRotate";
 import type { Product } from "@/types/Product.ts";
 import type { Event } from "@/types/Event.ts";
 import { toast } from "react-toastify";
@@ -33,6 +35,9 @@ export default function AdminPage() {
 
   const [expandProductForm, setExpandProductForm] = useState(false);
   const [expandEventForm, setExpandEventForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [newProductType, setNewProductType] = useState("");
+  const [showNewTypeInput, setShowNewTypeInput] = useState(false);
 
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -40,7 +45,7 @@ export default function AdminPage() {
     description: "",
     price: "",
     quantity: "",
-    image: "",
+    image: [] as string[],
   });
 
   const [newEvent, setNewEvent] = useState({
@@ -50,8 +55,13 @@ export default function AdminPage() {
     end_date: "",
     location: "",
     address: "",
-    image: "",
+    image: [] as string[],
   });
+
+  const [pendingProductImages, setPendingProductImages] = useState<string[]>(
+    [],
+  );
+  const [pendingEventImages, setPendingEventImages] = useState<string[]>([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const filteredProducts = products.filter(
@@ -60,7 +70,12 @@ export default function AdminPage() {
       type.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  const productTypes = Array.from(
+    new Set(products.map((p) => p.type).filter(Boolean)),
+  ).sort();
+
   const addProductMutation = useAddProduct();
+  const updateProductMutation = useUpdateProduct();
   const addEventMutation = useAddEvent();
 
   useEffect(() => {
@@ -199,7 +214,7 @@ export default function AdminPage() {
       name: newProduct.name.trim(),
       type: newProduct.type.trim(),
       description: newProduct.description.trim(),
-      image: newProduct.image,
+      image: pendingProductImages,
       price: +newProduct.price,
       quantity: +newProduct.quantity,
     };
@@ -210,14 +225,18 @@ export default function AdminPage() {
         .from("products")
         .select("*");
       setProducts(productsData || []);
+      toast.success(`"${product.name}" has been added successfully!`);
       setNewProduct({
         name: "",
         type: "",
         description: "",
         price: "",
         quantity: "",
-        image: "",
+        image: [],
       });
+      setShowNewTypeInput(false);
+      setNewProductType("");
+      setPendingProductImages([]);
     } catch (err: any) {
       toast.error("Add product failed: " + err.message);
     }
@@ -229,6 +248,57 @@ export default function AdminPage() {
     setProducts((prev) => prev.filter((p) => Number(p.id) !== Number(id)));
   };
 
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct({
+      ...product,
+      price:
+        typeof product.price === "string"
+          ? parseFloat(product.price)
+          : product.price,
+      quantity:
+        typeof product.quantity === "string"
+          ? parseFloat(product.quantity)
+          : product.quantity,
+    });
+    setPendingProductImages([]);
+  };
+
+  const handleSaveEditedProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+
+    const updatedProduct: Product = {
+      ...editingProduct,
+      image: editingProduct.image || [],
+      price:
+        typeof editingProduct.price === "string"
+          ? parseFloat(editingProduct.price)
+          : editingProduct.price,
+      quantity:
+        typeof editingProduct.quantity === "string"
+          ? parseFloat(editingProduct.quantity)
+          : editingProduct.quantity,
+    };
+
+    try {
+      await updateProductMutation.mutateAsync(updatedProduct);
+      const { data: productsData } = await supabase
+        .from("products")
+        .select("*");
+      setProducts(productsData || []);
+      setEditingProduct(null);
+      setPendingProductImages([]);
+      toast.success("Product updated successfully");
+    } catch (err: any) {
+      toast.error("Update product failed: " + err.message);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingProduct(null);
+    setPendingProductImages([]);
+  };
+
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -238,25 +308,28 @@ export default function AdminPage() {
     }
 
     try {
+      // Merge already saved images with newly uploaded/cropped images
       const eventToAdd: Event = {
         id: crypto.randomUUID(),
-        title: newEvent.title,
-        description: newEvent.description,
+        title: newEvent.title.trim(),
+        description: newEvent.description.trim(),
         start_date: newEvent.start_date,
         end_date: newEvent.end_date || null,
-        location: newEvent.location,
-        address: newEvent.address,
-        image: newEvent.image || null,
+        location: newEvent.location.trim(),
+        address: newEvent.address.trim(),
+        image: [...newEvent.image, ...pendingEventImages],
       };
 
       await addEventMutation.mutateAsync(eventToAdd);
 
+      // Refresh events
       const { data } = await supabase
         .from("events")
         .select("*")
         .order("start_date", { ascending: true });
-
       setEvents(data || []);
+
+      // Reset form & pending images
       setNewEvent({
         title: "",
         description: "",
@@ -264,8 +337,11 @@ export default function AdminPage() {
         end_date: "",
         location: "",
         address: "",
-        image: "",
+        image: [],
       });
+      setPendingEventImages([]);
+
+      toast.success("Event added successfully");
     } catch (err: any) {
       toast.error("Add event failed: " + (err.message || err));
     }
@@ -638,7 +714,8 @@ export default function AdminPage() {
                 onSubmit={handleAddProduct}
                 className="grid grid-cols-1 md:grid-cols-2 gap-4"
               >
-                {["name", "type", "price", "quantity"].map((field) => (
+                {/* Name, Price, Quantity */}
+                {["name", "price", "quantity"].map((field) => (
                   <div key={field} className="space-y-1">
                     <label className="text-sm font-medium text-gray-700 capitalize">
                       {field}
@@ -662,15 +739,96 @@ export default function AdminPage() {
                   </div>
                 ))}
 
+                {/* Type - Dropdown or New Input */}
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Type
+                  </label>
+                  {showNewTypeInput ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="New type..."
+                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                        value={newProductType}
+                        onChange={(e) => setNewProductType(e.target.value)}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newProductType.trim()) {
+                            setNewProduct((prev) => ({
+                              ...prev,
+                              type: newProductType.trim(),
+                            }));
+                            setNewProductType("");
+                            setShowNewTypeInput(false);
+                          }
+                        }}
+                        className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewTypeInput(false);
+                          setNewProductType("");
+                        }}
+                        className="px-3 py-2 rounded-lg bg-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-400 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <select
+                        className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                        value={newProduct.type}
+                        onChange={(e) =>
+                          setNewProduct((prev) => ({
+                            ...prev,
+                            type: e.target.value,
+                          }))
+                        }
+                        required
+                      >
+                        <option value="">Select a type</option>
+                        {productTypes.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                        {newProduct.type &&
+                          !productTypes.includes(newProduct.type) && (
+                            <option
+                              key={newProduct.type}
+                              value={newProduct.type}
+                            >
+                              {newProduct.type} (new)
+                            </option>
+                          )}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setShowNewTypeInput(true)}
+                        className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition whitespace-nowrap"
+                      >
+                        + New
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 {/* Image Upload */}
                 <div className="md:col-span-2">
                   <ImageUpload
                     bucket="images"
                     folder="products"
-                    value={newProduct.image}
-                    onUpload={(url) =>
-                      setNewProduct((p) => ({ ...p, image: url }))
-                    }
+                    value={newProduct.image} // saved images (optional)
+                    onUpload={(urls) => setPendingProductImages(urls)} // only update pending
+                    aspect={16 / 9}
                   />
                 </div>
 
@@ -712,7 +870,7 @@ export default function AdminPage() {
                   className="flex items-center gap-4 rounded-xl border border-gray-100 bg-gray-50 p-3"
                 >
                   <img
-                    src={p.image}
+                    src={p.image?.[0] || "/placeholder.png"}
                     alt={p.name}
                     className="h-14 w-14 rounded-lg object-cover flex-shrink-0"
                   />
@@ -728,6 +886,13 @@ export default function AdminPage() {
                       ${p.price.toFixed(2)} · {p.type} · Qty {p.quantity}
                     </p>
                   </div>
+
+                  <button
+                    onClick={() => handleEditProduct(p)}
+                    className="text-sm font-medium text-blue-600 hover:text-blue-700 transition"
+                  >
+                    Edit
+                  </button>
 
                   <button
                     onClick={() => handleDeleteProduct(Number(p.id))}
@@ -871,10 +1036,9 @@ export default function AdminPage() {
                   <ImageUpload
                     bucket="images"
                     folder="events"
-                    value={newEvent.image}
-                    onUpload={(url) =>
-                      setNewEvent((p) => ({ ...p, image: url }))
-                    }
+                    value={newEvent.image} // saved images (optional)
+                    onUpload={(urls) => setPendingEventImages(urls)} // only update pending
+                    aspect={16 / 9}
                   />
                 </div>
 
@@ -911,7 +1075,7 @@ export default function AdminPage() {
               {events.map((e) => (
                 <li
                   key={e.id}
-                  className="flex items-start gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4"
+                  className="flex flex-col sm:flex-row items-start gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4"
                 >
                   <div className="flex-1 min-w-0 space-y-1">
                     <p
@@ -922,13 +1086,13 @@ export default function AdminPage() {
                     </p>
 
                     <p className="text-sm text-gray-600">
-                      <strong>When:</strong> {formatUTCDate(e.start_date)} –
+                      <strong>When:</strong> {formatUTCDate(e.start_date)} –{" "}
                       {formatUTCDate(e.end_date)}
                     </p>
 
                     {(e.location || e.address) && (
                       <p className="text-sm text-gray-700">
-                        <strong>Where:</strong>
+                        <strong>Where:</strong>{" "}
                         {[e.location, e.address].filter(Boolean).join(", ")}
                       </p>
                     )}
@@ -936,11 +1100,25 @@ export default function AdminPage() {
                     {e.description && (
                       <p className="text-sm text-gray-700">{e.description}</p>
                     )}
+
+                    {/* Images */}
+                    {e.image && e.image.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2 mt-2">
+                        {e.image.map((img, idx) => (
+                          <img
+                            key={idx}
+                            src={img}
+                            alt={`Event ${e.title} image ${idx + 1}`}
+                            className="w-full aspect-square object-cover rounded"
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <button
                     onClick={() => handleDeleteEvent(e.id)}
-                    className="text-sm font-medium text-red-600 hover:text-red-700 transition"
+                    className="mt-2 sm:mt-0 text-sm font-medium text-red-600 hover:text-red-700 transition"
                   >
                     Delete
                   </button>
@@ -956,6 +1134,114 @@ export default function AdminPage() {
           </div>
         </section>
       </div>
+
+      {/* -------------------- EDIT PRODUCT MODAL -------------------- */}
+      {editingProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white">
+              <h2
+                className="text-lg font-semibold"
+                style={{ color: brandColor }}
+              >
+                Edit Product
+              </h2>
+              <button
+                onClick={handleCancelEdit}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <form
+              onSubmit={handleSaveEditedProduct}
+              className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              {["name", "type", "price", "quantity"].map((field) => (
+                <div key={field} className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700 capitalize">
+                    {field}
+                  </label>
+                  <input
+                    type={
+                      ["price", "quantity"].includes(field) ? "number" : "text"
+                    }
+                    step={["price"].includes(field) ? "0.01" : "1"}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                    value={(editingProduct as any)[field]}
+                    onChange={(e) =>
+                      setEditingProduct((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              [field]: ["price", "quantity"].includes(field)
+                                ? parseFloat(e.target.value)
+                                : e.target.value,
+                            }
+                          : null,
+                      )
+                    }
+                    required
+                  />
+                </div>
+              ))}
+
+              {/* Image Upload with Rotation */}
+              <div className="md:col-span-2">
+                <ImageUploadWithRotate
+                  bucket="images"
+                  folder="products"
+                  value={editingProduct.image || []}
+                  onUpload={(urls) =>
+                    setEditingProduct((prev) =>
+                      prev ? { ...prev, image: urls } : null,
+                    )
+                  }
+                  aspect={16 / 9}
+                />
+              </div>
+
+              {/* Description */}
+              <div className="md:col-span-2 space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  rows={4}
+                  value={editingProduct.description}
+                  onChange={(e) =>
+                    setEditingProduct((prev) =>
+                      prev ? { ...prev, description: e.target.value } : null,
+                    )
+                  }
+                  required
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="md:col-span-2 flex gap-3">
+                <button
+                  type="submit"
+                  disabled={updateProductMutation.isPending}
+                  className="flex-1 h-11 rounded-lg text-sm font-medium shadow-sm transition hover:opacity-90"
+                  style={{ backgroundColor: brandColor, color: "white" }}
+                >
+                  {updateProductMutation.isPending ? "Saving…" : "Save Changes"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="flex-1 h-11 rounded-lg text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

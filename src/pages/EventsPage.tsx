@@ -68,7 +68,7 @@ export default function EventsPage() {
                 >
                   {event.image && (
                     <img
-                      src={event.image}
+                      src={event.image[0]}
                       alt={event.title}
                       className="h-48 w-full object-cover"
                     />
