@@ -15,7 +15,6 @@ export interface ImageUploadWithRotateProps {
   value?: string[];
   onUpload?: (urls: string[]) => void;
   onChange?: (urls: string[]) => void;
-  aspect?: number;
 }
 
 export default function ImageUploadWithRotate({
@@ -24,19 +23,17 @@ export default function ImageUploadWithRotate({
   value = [],
   onChange,
 }: ImageUploadWithRotateProps) {
-  // Initialize with existing images
   const [localImages, setLocalImages] = useState<LocalImage[]>(
     value.map((url) => ({ url, rotation: 0 })),
   );
 
-  // Keep in sync if parent value changes
   useEffect(() => {
     setLocalImages(value.map((url) => ({ url, rotation: 0 })));
   }, [value]);
 
-  // Upload rotated image
   const uploadRotatedImage = async (img: LocalImage): Promise<string> => {
-    if (!img.file) return img.url; // already uploaded
+    if (!img.file) return img.url;
+
     try {
       const imgEl = new Image();
       imgEl.src = URL.createObjectURL(img.file);
@@ -128,8 +125,11 @@ export default function ImageUploadWithRotate({
                 <img
                   src={img.url}
                   alt="uploaded"
-                  className="w-full aspect-square object-cover rounded-lg border"
-                  style={{ transform: `rotate(${img.rotation}deg)` }}
+                  className="w-full object-contain rounded-lg border"
+                  style={{
+                    transform: `rotate(${img.rotation}deg)`,
+                    maxHeight: "400px", // ensures tall images fit
+                  }}
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-lg transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                   <button

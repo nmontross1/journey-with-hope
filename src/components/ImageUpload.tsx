@@ -71,7 +71,8 @@ export default function ImageUpload({
             <div key={img} className="relative">
               <img
                 src={img}
-                className="w-full aspect-square object-contain rounded-lg border cursor-pointer"
+                className="w-full max-h-80 object-contain rounded-lg border cursor-pointer"
+                style={{ maxHeight: "400px" }}
               />
               <button
                 type="button"

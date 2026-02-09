@@ -1196,7 +1196,6 @@ export default function AdminPage() {
                       prev ? { ...prev, image: urls } : null,
                     )
                   }
-                  aspect={16 / 9}
                 />
               </div>
 
