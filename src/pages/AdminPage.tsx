@@ -73,6 +73,9 @@ export default function AdminPage() {
     new Set(products.map((p) => p.type).filter(Boolean)),
   ).sort();
 
+  const [homeMessage, setHomeMessage] = useState("");
+  const [shopMessage, setShopMessage] = useState("");
+
   const addProductMutation = useAddProduct();
   const updateProductMutation = useUpdateProduct();
   const addEventMutation = useAddEvent();
@@ -87,6 +90,7 @@ export default function AdminPage() {
         { data: profilesData },
         { data: ordersData },
         { data: eventsData },
+        { data: messagesData },
       ] = await Promise.all([
         supabase.from("products").select("*"),
         supabase.from("availability").select("*"),
@@ -104,6 +108,7 @@ export default function AdminPage() {
           .from("events")
           .select("*")
           .order("start_date", { ascending: true }),
+        supabase.from("site_messages").select("*"),
       ]);
 
       setProducts(productsData || []);
@@ -113,10 +118,46 @@ export default function AdminPage() {
       setProfiles(profilesData || []);
       setOrders(ordersData || []);
       setEvents(eventsData || []);
+      if (messagesData) {
+        const home = messagesData.find((m) => m.id === "homepage");
+        const shop = messagesData.find((m) => m.id === "shop");
+
+        setHomeMessage(home?.content || "");
+        setShopMessage(shop?.content || "");
+      }
     };
 
     fetchData();
   }, []);
+
+  const saveMessages = async () => {
+    try {
+      // Upsert messages
+      await supabase.from("site_messages").upsert([
+        { id: "homepage", content: homeMessage },
+        { id: "shop", content: shopMessage },
+      ]);
+
+      // Fetch the latest values to ensure state matches DB
+      const { data: messagesData, error } = await supabase
+        .from("site_messages")
+        .select("*")
+        .in("id", ["homepage", "shop"]);
+
+      if (error) throw error;
+
+      // Update local state
+      const home = messagesData.find((m) => m.id === "homepage");
+      const shop = messagesData.find((m) => m.id === "shop");
+
+      setHomeMessage(home?.content || "");
+      setShopMessage(shop?.content || "");
+
+      toast.success("Website messages updated successfully!");
+    } catch (err: any) {
+      toast.error("Failed to update messages: " + err.message);
+    }
+  };
 
   const enrichedBookings = bookings
     .map((booking) => {
@@ -384,6 +425,81 @@ export default function AdminPage() {
       <Logo size="lg" />
 
       <div className="w-full max-w-full overflow-x-hidden mx-auto py-16 px-4 md:px-6 space-y-10">
+        {/* -------------------- WEBSITE MESSAGES -------------------- */}
+        <section className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm">
+          {/* Header */}
+          <div className="px-6 py-4 border-b flex items-center justify-between">
+            <h2
+              className="text-lg font-semibold tracking-tight"
+              style={{ color: brandColor }}
+            >
+              Manage Messages
+            </h2>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 space-y-6">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                saveMessages();
+              }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
+              {/* Home Message */}
+              <div className="space-y-1 relative">
+                <label className="text-sm font-medium text-gray-700 flex justify-between items-center">
+                  Home message
+                  <button
+                    type="button"
+                    onClick={() => setHomeMessage("")}
+                    className="ml-2 text-red-500 hover:text-red-700 text-xs font-semibold"
+                  >
+                    Delete
+                  </button>
+                </label>
+                <textarea
+                  rows={4}
+                  value={homeMessage}
+                  onChange={(e) => setHomeMessage(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                />
+              </div>
+
+              {/* Shop Message */}
+              <div className="space-y-1 relative">
+                <label className="text-sm font-medium text-gray-700 flex justify-between items-center">
+                  Shop message
+                  <button
+                    type="button"
+                    onClick={() => setShopMessage("")}
+                    className="ml-2 text-red-500 hover:text-red-700 text-xs font-semibold"
+                  >
+                    Delete
+                  </button>
+                </label>
+                <textarea
+                  rows={4}
+                  value={shopMessage}
+                  onChange={(e) => setShopMessage(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                />
+              </div>
+
+              {/* Save Button */}
+              <div className="md:col-span-2 flex justify-center">
+                <button
+                  type="submit"
+                  className="h-11 rounded-lg text-sm font-medium shadow-sm transition hover:opacity-90 px-6"
+                  style={{ backgroundColor: brandColor, color: "white" }}
+                >
+                  Save Messages
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
         {/* -------------------- UPCOMING APPOINTMENTS -------------------- */}
         <section className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm">
           <div className="px-6 py-4 border-b flex items-center justify-between">

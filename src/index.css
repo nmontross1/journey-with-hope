@@ -96,3 +96,8 @@
 /* h1, h2, p, ul, li, button, label, input, select, option, textarea, nav {
   font-family: "Naive"
 } */
+
+#message {
+  font-family: "Allura", cursive;
+  font-size: 1.3rem;
+}

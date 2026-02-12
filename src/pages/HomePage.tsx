@@ -2,30 +2,17 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
 import Logo from "@/components/Logo";
+import { supabase } from "@/libs/supabaseClient";
 
 const slides = [
-  {
-    src: "/profile.jpg",
-    alt: "Tarot",
-    link: "/appointments",
-    label: "Tarot",
-  },
-  {
-    src: "/reiki.jpg",
-    alt: "Reiki",
-    link: "/appointments",
-    label: "Reiki",
-  },
-  {
-    src: "/crystals.jpg",
-    alt: "Crystals",
-    link: "/shop",
-    label: "Crystals",
-  },
+  { src: "/profile.jpg", alt: "Tarot", link: "/appointments", label: "Tarot" },
+  { src: "/reiki.jpg", alt: "Reiki", link: "/appointments", label: "Reiki" },
+  { src: "/crystals.jpg", alt: "Crystals", link: "/shop", label: "Crystals" },
 ];
 
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [homeMessage, setHomeMessage] = useState("");
   const navigate = useNavigate();
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -37,12 +24,33 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const fetchMessage = async () => {
+      const { data, error } = await supabase
+        .from("site_messages")
+        .select("content")
+        .eq("id", "homepage")
+        .single();
+      if (!error && data) setHomeMessage(data.content);
+    };
+    fetchMessage();
+  }, []);
+
   const handleClick = () => navigate(slides[currentSlide].link);
 
   return (
     <Layout>
       <div className="flex flex-col relative min-h-screen items-center justify-center px-4 text-center">
         <Logo size="lg" />
+
+        {homeMessage && (
+          <div
+            id="message"
+            className="mt-4 mb-6 px-4 py-2 bg-[#d6c47f] rounded max-w-2xl"
+          >
+            {homeMessage}
+          </div>
+        )}
 
         {/* Slide with arrows */}
         <div className="relative mt-6 w-72 md:w-96 h-72 md:h-96">

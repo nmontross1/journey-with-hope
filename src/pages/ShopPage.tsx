@@ -179,6 +179,7 @@ export default function ShopPage() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [types, setTypes] = useState<string[]>([]);
+  const [shopMessage, setShopMessage] = useState("");
   const { cart, addToCart } = useCart();
 
   const totalItemsInCart = cart.reduce(
@@ -195,14 +196,21 @@ export default function ShopPage() {
           ...p,
           type: p.type.trim(),
         }));
-
         setProducts(cleaned);
-
-        const uniqueTypes = [...new Set(cleaned.map((p) => p.type))];
-        setTypes(uniqueTypes);
+        setTypes([...new Set(cleaned.map((p) => p.type))]);
       }
     }
     fetchProducts();
+
+    const fetchMessage = async () => {
+      const { data, error } = await supabase
+        .from("site_messages")
+        .select("content")
+        .eq("id", "shop")
+        .single();
+      if (!error && data) setShopMessage(data.content);
+    };
+    fetchMessage();
   }, []);
 
   const filteredProducts = products.filter((product) => {
@@ -236,6 +244,16 @@ export default function ShopPage() {
   return (
     <Layout>
       <Logo size="lg" />
+
+      {/* Site Message */}
+      {shopMessage && (
+        <div
+          id="message"
+          className="mt-4 mb-6 px-4 py-2 bg-[#d6c47f] rounded max-w-7xl mx-auto text-center"
+        >
+          {shopMessage}
+        </div>
+      )}
 
       {/* Cart Icon */}
       <div className="fixed top-4 right-4 z-50">
@@ -333,9 +351,7 @@ export default function ShopPage() {
                       key={t}
                       value={t}
                       className={({ active }) =>
-                        `cursor-pointer px-3 py-2 ${
-                          active ? "bg-gray-100" : ""
-                        }`
+                        `cursor-pointer px-3 py-2 ${active ? "bg-gray-100" : ""}`
                       }
                     >
                       {t}

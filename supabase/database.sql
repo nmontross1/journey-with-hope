@@ -116,6 +116,13 @@ create table public.events (
   constraint events_pkey primary key (id)
 ) TABLESPACE pg_default;
 
+-- site_messages table
+create table if not exists public.site_messages (
+  id text primary key,
+  content text,
+  updated_at timestamptz not null default now()
+);
+
 -- =========================================================
 -- ADMIN HELPER (SECURITY DEFINER, NO RLS RECURSION)
 -- =========================================================
@@ -138,6 +145,21 @@ revoke all on function public.is_admin() from public;
 grant execute on function public.is_admin() to authenticated;
 
 -- =========================================================
+-- Automatically update updated_at on change for site_messages
+-- =========================================================
+create or replace function update_site_messages_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+create trigger update_site_messages_timestamp
+before update on public.site_messages
+for each row
+execute function update_site_messages_updated_at();
+
+-- =========================================================
 -- ENABLE RLS ON ALL TABLES
 -- =========================================================
 alter table public.profiles enable row level security;
@@ -147,6 +169,7 @@ alter table public.bookings enable row level security;
 alter table public.products enable row level security;
 alter table public.orders enable row level security;
 alter table public.events enable row level security;
+alter table public.site_messages enable row level security;
 
 -- =========================================================
 -- PROFILES
@@ -299,3 +322,22 @@ for all
 using ((select auth.uid()) is not null)
 with check ((select auth.uid()) is not null);
 
+-- =========================================================
+-- Site Messages
+-- Public read; admin full CRUD
+-- =========================================================
+create policy "Public read site messages"
+on public.site_messages
+for select
+using (true);
+
+create policy "Admins can update site messages"
+on public.site_messages
+for all
+using (
+  exists (
+    select 1 from public.profiles
+    where profiles.id = auth.uid()
+    and profiles.role = 'admin'
+  )
+);
