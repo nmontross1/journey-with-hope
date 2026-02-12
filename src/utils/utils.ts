@@ -45,11 +45,12 @@ export function parseTime(timeStr: string): Date {
 /**
  * Format Date to a US standard time string (e.g., "4:30 PM")
  */
-export function formatTime(date: Date): string {
+export function formatTime(dateInput: string | Date) {
+  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
   return date.toLocaleTimeString("en-US", {
-    timeZone: "America/New_York",
-    hour: "numeric",
+    hour: "2-digit",
     minute: "2-digit",
+    timeZone: "America/New_York",
   });
 }
 
@@ -162,4 +163,54 @@ export function formatUTCDate(utcString?: string | null) {
     hour12: true,
     timeZone: "UTC",
   });
+}
+
+/**
+ * Safely format a UTC ISO start/end pair to ET for display.
+ * Strips timezone offsets to treat DB "wall time" as local time.
+ */
+export function formatStoreHoursET(
+  slots: { start: string; end: string }[],
+): string {
+  // 1. Create a formatter for New York date comparison
+  const etDateFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const todayETStr = etDateFormatter.format(new Date());
+
+  // 2. Filter slots that match "Today" in Eastern Time
+  const todaysSlots = slots.filter((slot) => {
+    const slotDate = new Date(slot.start);
+    return etDateFormatter.format(slotDate) === todayETStr;
+  });
+
+  if (!todaysSlots.length) return "Closed";
+
+  // 3. Format the times
+  return todaysSlots
+    .map((slot) => {
+      // Remove timezone suffixes (+00, +00:00, or Z) to prevent the 5-hour shift
+      const cleanStart = slot.start.replace(/(\+\d+:\d+|\+\d+|Z)$/, "");
+      const cleanEnd = slot.end.replace(/(\+\d+:\d+|\+\d+|Z)$/, "");
+
+      // Create date objects from the "clean" strings
+      const startDate = new Date(cleanStart);
+      const endDate = new Date(cleanEnd);
+
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      };
+
+      const startStr = startDate.toLocaleTimeString("en-US", timeOptions);
+      const endStr = endDate.toLocaleTimeString("en-US", timeOptions);
+
+      return `${startStr} - ${endStr}`;
+    })
+    .join(", ");
 }

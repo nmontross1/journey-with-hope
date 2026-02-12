@@ -123,6 +123,14 @@ create table if not exists public.site_messages (
   updated_at timestamptz not null default now()
 );
 
+-- store_hours
+create table store_hours (
+  id uuid primary key default uuid_generate_v4(),
+  start timestamptz not null,
+  "end" timestamptz not null,
+  created_at timestamptz default now()
+);
+
 -- =========================================================
 -- ADMIN HELPER (SECURITY DEFINER, NO RLS RECURSION)
 -- =========================================================
@@ -170,6 +178,7 @@ alter table public.products enable row level security;
 alter table public.orders enable row level security;
 alter table public.events enable row level security;
 alter table public.site_messages enable row level security;
+alter table store_hours enable row level security;
 
 -- =========================================================
 -- PROFILES
@@ -339,5 +348,27 @@ using (
     select 1 from public.profiles
     where profiles.id = auth.uid()
     and profiles.role = 'admin'
+  )
+);
+
+-- =========================================================
+-- Store Hours
+-- Public read; admin full CRUD
+-- =========================================================
+-- Allow anyone (even non-authenticated) to read store_hours
+create policy "Public read store_hours"
+on public.store_hours
+for select
+using (true);
+
+-- Allow admins full CRUD on store_hours
+create policy "Admins can manage store_hours"
+on public.store_hours
+for all
+using (
+  exists (
+    select 1 from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role = 'admin'
   )
 );

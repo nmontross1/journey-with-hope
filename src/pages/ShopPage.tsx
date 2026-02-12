@@ -56,10 +56,11 @@ function ProductCard({ product, onAdd }: ProductCardProps) {
         {/* Image with counter */}
         <div className="relative">
           <img
-            src={images[0]}
-            alt={product.name}
+            src={images[0] || "/logo.png"}
+            alt="Logo"
             className="h-48 w-full object-cover cursor-pointer hover:opacity-90 transition"
             onClick={() => setPreviewImageIndex(0)}
+            onError={(e) => (e.currentTarget.src = "/logo.png")}
           />
           {images.length > 1 && (
             <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">

@@ -2,20 +2,23 @@ import Layout from "./Layout";
 import { Link } from "react-router-dom";
 import { useAvailability } from "@/hooks/useAvailability";
 import { useEffect, useState } from "react";
+import Logo from "@/components/Logo";
+import { supabase } from "@/libs/supabaseClient";
 import {
+  formatStoreHoursET,
   getTimeRanges,
   fetchBookedSlotIds,
   getTodayString,
 } from "@/utils/utils.ts";
-import Logo from "@/components/Logo";
 
-const locations = [
+const initialLocations = [
   {
     id: 1,
     name: "Main Store",
     address: "201 Sherman Ave, Vandergrift, PA 15690",
     phone: "(724) 594-3349",
     image: "/home-store.jpg",
+    hours: "", // will be filled from Supabase
   },
   {
     id: 2,
@@ -30,6 +33,7 @@ const locations = [
 export default function LocationPage() {
   const { availability, loading } = useAvailability();
   const [bookedSlotIds, setBookedSlotIds] = useState<string[]>([]);
+  const [locations, setLocations] = useState(initialLocations);
 
   const todayStr = getTodayString();
   const now = new Date();
@@ -42,12 +46,37 @@ export default function LocationPage() {
     loadBookedSlots();
   }, []);
 
+  // Fetch store hours for main store
+  useEffect(() => {
+    const fetchStoreHours = async () => {
+      const { data, error } = await supabase
+        .from("store_hours")
+        .select("*")
+        .order("start", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching store hours:", error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const hoursStr = formatStoreHoursET(data);
+
+        setLocations((prev) => {
+          const newLocs = [...prev];
+          newLocs[0].hours = hoursStr;
+          return newLocs;
+        });
+      }
+    };
+
+    fetchStoreHours();
+  }, []);
+
   const mainStoreSlots = (availability[todayStr] || []).filter(
     (slot) =>
       !bookedSlotIds.includes(slot.id) && new Date(slot.available_from) > now,
   );
-  const linkClass =
-    "inline-block mt-2 text-[#d6c47f] hover:underline font-medium";
 
   return (
     <Layout>
@@ -58,50 +87,78 @@ export default function LocationPage() {
         </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {locations.map((loc) => {
-            const isMainStore = loc.name === "Main Store";
+            const isMainStore = loc.id === 1;
 
             return (
               <div
                 key={loc.id}
-                className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden"
+                className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden flex flex-col"
               >
                 <img
                   src={loc.image || "/placeholder.png"}
                   alt={loc.name}
                   className="h-48 w-full object-cover"
                 />
-                <div className="p-6">
-                  <h2 className="text-2xl font-semibold text-[#d6c47f] mb-2">
-                    {loc.name}
-                  </h2>
-                  <p className="text-gray-600 mb-1">{loc.address}</p>
+                <div className="p-6 flex flex-col flex-1 justify-between">
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-semibold text-[#d6c47f]">
+                      {loc.name}
+                    </h2>
+                    <p className="text-gray-600">{loc.address}</p>
 
-                  {isMainStore ? (
-                    <div className="mb-2 text-gray-600">
-                      <strong>Today's Availability:</strong>
+                    <div className="space-y-2">
+                      <div>
+                        <strong className="block text-gray-700 mb-1">
+                          Today's Store Hours:
+                        </strong>
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                            loc.hours
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {loc.hours || "Closed"}
+                        </span>
+                      </div>
 
-                      {loading ? (
-                        <div>Loading...</div>
-                      ) : mainStoreSlots.length > 0 ? (
-                        <div className="block">
-                          {getTimeRanges(mainStoreSlots).join(", ")}
+                      {isMainStore && (
+                        <div>
+                          <strong className="block text-gray-700 mb-1">
+                            Today's Booking Availability:
+                          </strong>
+                          {loading ? (
+                            <div className="text-gray-500 text-sm">
+                              Loading...
+                            </div>
+                          ) : mainStoreSlots.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {getTimeRanges(mainStoreSlots).map((range) => (
+                                <span
+                                  key={range}
+                                  className="bg-yellow-100 text-yellow-800 text-sm px-3 py-1 rounded-full font-medium"
+                                >
+                                  {range}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="inline-block bg-gray-100 text-gray-500 text-sm px-3 py-1 rounded-full">
+                              No availability today
+                            </span>
+                          )}
                         </div>
-                      ) : (
-                        <div>No availability today</div>
                       )}
-                    </div>
-                  ) : (
-                    <p className="text-gray-600 mb-1">{loc.hours}</p>
-                  )}
 
-                  <p className="text-gray-600 mb-3">Phone: {loc.phone}</p>
+                      <p className="text-gray-600">Phone: {loc.phone}</p>
+                    </div>
+                  </div>
+
                   <Link
-                    to={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                      loc.address,
-                    )}`}
+                    to={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={linkClass}
+                    className="inline-block mt-4 text-[#d6c47f] hover:underline font-medium"
                   >
                     Get Directions
                   </Link>

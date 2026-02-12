@@ -76,6 +76,10 @@ export default function AdminPage() {
   const [homeMessage, setHomeMessage] = useState("");
   const [shopMessage, setShopMessage] = useState("");
 
+  const [storeHours, setStoreHours] = useState<any[]>([]);
+  const [storeStartTime, setStoreStartTime] = useState("");
+  const [storeEndTime, setStoreEndTime] = useState("");
+
   const addProductMutation = useAddProduct();
   const updateProductMutation = useUpdateProduct();
   const addEventMutation = useAddEvent();
@@ -91,6 +95,7 @@ export default function AdminPage() {
         { data: ordersData },
         { data: eventsData },
         { data: messagesData },
+        { data: storeHoursData },
       ] = await Promise.all([
         supabase.from("products").select("*"),
         supabase.from("availability").select("*"),
@@ -109,6 +114,10 @@ export default function AdminPage() {
           .select("*")
           .order("start_date", { ascending: true }),
         supabase.from("site_messages").select("*"),
+        supabase
+          .from("store_hours")
+          .select("*")
+          .order("start", { ascending: true }),
       ]);
 
       setProducts(productsData || []);
@@ -125,6 +134,7 @@ export default function AdminPage() {
         setHomeMessage(home?.content || "");
         setShopMessage(shop?.content || "");
       }
+      setStoreHours(storeHoursData || []);
     };
 
     fetchData();
@@ -156,6 +166,50 @@ export default function AdminPage() {
       toast.success("Website messages updated successfully!");
     } catch (err: any) {
       toast.error("Failed to update messages: " + err.message);
+    }
+  };
+
+  const handleAddStoreHours = async () => {
+    if (!storeStartTime || !storeEndTime) return;
+
+    const start = new Date(storeStartTime);
+    const end = new Date(storeEndTime);
+
+    if (start <= nowNY) {
+      toast.info("Start time must be in the future");
+      return;
+    }
+    if (end <= start) {
+      toast.info("End time must be after start");
+      return;
+    }
+
+    // Insert into Supabase
+    const { data, error } = await supabase
+      .from("store_hours")
+      .insert([{ start: storeStartTime, end: storeEndTime }])
+      .select();
+
+    if (error) {
+      console.error(error);
+      toast.error("Failed to add store hours");
+    } else if (data) {
+      setStoreHours((prev) => [...prev, data[0]]);
+      setStoreStartTime("");
+      setStoreEndTime("");
+      toast.success("Store hours added successfully!");
+    }
+  };
+
+  const handleDeleteStoreSlot = async (id: string) => {
+    const { error } = await supabase.from("store_hours").delete().eq("id", id);
+
+    if (error) {
+      console.error(error);
+      toast.error("Failed to remove store hours");
+    } else {
+      setStoreHours((prev) => prev.filter((slot) => slot.id !== id));
+      toast.success("Store hours removed successfully!");
     }
   };
 
@@ -692,6 +746,97 @@ export default function AdminPage() {
               </div>
             )}
           </ul>
+        </section>
+
+        {/* -------------------- MANAGE STORE HOURS -------------------- */}
+        <section className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm">
+          {/* Header */}
+          <div className="px-6 py-4 border-b">
+            <h2
+              className="text-lg font-semibold tracking-tight"
+              style={{ color: brandColor }}
+            >
+              Manage Store Hours
+            </h2>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 space-y-6">
+            {/* Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddStoreHours();
+              }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
+            >
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Start Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  value={storeStartTime}
+                  onChange={(e) => setStoreStartTime(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  End Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  value={storeEndTime}
+                  onChange={(e) => setStoreEndTime(e.target.value)}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="h-10 rounded-lg text-sm font-medium shadow-sm transition hover:opacity-90"
+                style={{ backgroundColor: brandColor, color: "white" }}
+              >
+                Set Store Hours
+              </button>
+            </form>
+
+            {/* Store Hours List */}
+            <ul className="divide-y text-sm max-h-64 overflow-y-auto">
+              {storeHours
+                .sort(
+                  (a, b) =>
+                    new Date(a.start).getTime() - new Date(b.start).getTime(),
+                )
+                .map((slot) => (
+                  <li
+                    key={slot.id}
+                    className="flex justify-between items-center py-3"
+                  >
+                    <span className="text-gray-700">
+                      {formatUTCDate(slot.start)} - {formatUTCDate(slot.end)}
+                    </span>
+
+                    <button
+                      onClick={() => handleDeleteStoreSlot(slot.id)}
+                      className="text-sm font-medium text-red-600 hover:text-red-700 transition"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+
+              {storeHours.length === 0 && (
+                <div className="py-8 text-center text-gray-500">
+                  No store hours set
+                </div>
+              )}
+            </ul>
+          </div>
         </section>
 
         {/* -------------------- MANAGE AVAILABILITY -------------------- */}
