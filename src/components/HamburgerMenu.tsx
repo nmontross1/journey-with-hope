@@ -57,12 +57,9 @@ export default function HamburgerMenu() {
   const menuTextClass =
     "text-[#d6c47f] transition font-medium hover:bg-[#384e1d]/10 px-3 py-2 rounded md:text-lg flex items-center space-x-2";
 
-  // Menu items
   const menuItems: {
     label: string;
     to: string;
-    icon?: string;
-    external?: boolean;
   }[] = [
     !user && { label: "Login / Create Account", to: "/login" },
     user &&
@@ -71,25 +68,8 @@ export default function HamburgerMenu() {
     { label: "Appointments", to: "/appointments" },
     { label: "Locations", to: "/locations" },
     { label: "Events", to: "/events" },
-    {
-      label: "Facebook",
-      to: "https://www.facebook.com/profile.php?id=100086688615594",
-      icon: "/facebook.jpg",
-      external: true,
-    },
-    {
-      label: "Instagram",
-      to: "https://www.instagram.com/journey_w_hope/",
-      icon: "/instagram.jpg",
-      external: true,
-    },
     user?.profile?.role === "admin" && { label: "Admin", to: "/admin" },
-  ].filter(Boolean) as {
-    label: string;
-    to: string;
-    icon?: string;
-    external?: boolean;
-  }[];
+  ].filter(Boolean) as { label: string; to: string }[];
 
   return (
     <>
@@ -107,34 +87,16 @@ export default function HamburgerMenu() {
       {menuOpen && (
         <div className="fixed inset-0 z-30 bg-[#384e1d] bg-opacity-95 flex flex-col pt-24 px-4 md:hidden">
           <nav className="flex flex-col space-y-6 text-xl">
-            {menuItems.map((item) =>
-              item.icon ? (
-                <a
-                  key={item.to}
-                  href={item.to}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={menuTextClass}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <img
-                    src={item.icon}
-                    alt={item.label}
-                    className="w-6 h-6 object-contain"
-                  />
-                  <span>{item.label}</span>
-                </a>
-              ) : (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setMenuOpen(false)}
-                  className={menuTextClass}
-                >
-                  {item.label}
-                </Link>
-              ),
-            )}
+            {menuItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={() => setMenuOpen(false)}
+                className={menuTextClass}
+              >
+                {item.label}
+              </Link>
+            ))}
 
             {user && (
               <button
@@ -144,29 +106,58 @@ export default function HamburgerMenu() {
                 Logout
               </button>
             )}
+
+            {/* Social Icons Row */}
+            <div className="flex items-center justify-center space-x-4 pt-8">
+              <a
+                href="https://www.facebook.com/profile.php?id=100086688615594"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMenuOpen(false)}
+                className="hover:opacity-70 transition"
+              >
+                <img
+                  src="/facebook.jpg"
+                  alt="Facebook"
+                  className="w-7 h-7 object-contain"
+                />
+              </a>
+
+              <span className="text-[#d6c47f] text-lg">|</span>
+
+              <a
+                href="https://www.instagram.com/journey_w_hope/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMenuOpen(false)}
+                className="hover:opacity-70 transition"
+              >
+                <img
+                  src="/instagram.jpg"
+                  alt="Instagram"
+                  className="w-7 h-7 object-contain"
+                />
+              </a>
+            </div>
+
+            {/* Contact Email */}
+            <div className="text-center text-[#d6c47f] pt-4 text-sm">
+              <a
+                href="mailto:journeywithope714@gmail.com"
+                className="hover:underline"
+              >
+                Contact: journeywithope714@gmail.com
+              </a>
+            </div>
           </nav>
         </div>
       )}
 
       {/* DESKTOP SIDEBAR */}
-      <div className="hidden md:flex md:flex-col md:fixed md:top-0 md:left-0 md:w-64 md:h-full md:pt-20 md:px-4 md:space-y-4 md:border-r md:border-gray-200 bg-[#384e1d]/90 z-20">
-        {menuItems.map((item) =>
-          item.icon ? (
-            <a
-              key={item.to}
-              href={item.to}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={menuTextClass}
-            >
-              <img
-                src={item.icon}
-                alt={item.label}
-                className="w-6 h-6 object-contain"
-              />
-              <span>{item.label}</span>
-            </a>
-          ) : (
+      <div className="hidden md:flex md:flex-col md:fixed md:top-0 md:left-0 md:w-64 md:h-full md:pt-20 md:px-4 md:border-r md:border-gray-200 bg-[#384e1d]/90 z-20">
+        {/* Menu Items */}
+        <div className="flex flex-col space-y-4 flex-grow">
+          {menuItems.map((item) => (
             <Link
               key={item.to}
               to={item.to}
@@ -174,17 +165,59 @@ export default function HamburgerMenu() {
             >
               {item.label}
             </Link>
-          ),
-        )}
+          ))}
 
-        {user && (
-          <button
-            onClick={handleLogout}
-            className={`${menuTextClass} block w-full text-left`}
-          >
-            Logout
-          </button>
-        )}
+          {user && (
+            <button
+              onClick={handleLogout}
+              className={`${menuTextClass} block w-full text-left`}
+            >
+              Logout
+            </button>
+          )}
+        </div>
+
+        {/* Bottom Social Section */}
+        <div className="border-t border-[#d6c47f]/30 pt-6 pb-6">
+          <div className="flex items-center justify-center space-x-4">
+            <a
+              href="https://www.facebook.com/profile.php?id=100086688615594"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-70 transition"
+            >
+              <img
+                src="/facebook.jpg"
+                alt="Facebook"
+                className="w-8 h-8 object-contain"
+              />
+            </a>
+
+            <span className="text-[#d6c47f] text-lg">|</span>
+
+            <a
+              href="https://www.instagram.com/journey_w_hope/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-70 transition"
+            >
+              <img
+                src="/instagram.jpg"
+                alt="Instagram"
+                className="w-8 h-8 object-contain"
+              />
+            </a>
+          </div>
+
+          <div className="text-center text-[#d6c47f] text-sm pt-4">
+            <a
+              href="mailto:journeywithope714@gmail.com"
+              className="hover:underline"
+            >
+              Contact: journeywithope714@gmail.com
+            </a>
+          </div>
+        </div>
       </div>
     </>
   );
